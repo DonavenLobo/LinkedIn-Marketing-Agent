@@ -1,19 +1,22 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import type { Database } from "@linkedin-agent/shared";
+import type { User } from "@supabase/supabase-js";
+
+type AuthResult =
+  | { user: User; supabase: SupabaseClient; error: null }
+  | { user: null; supabase: SupabaseClient; error: string };
 
 /**
  * Dual-mode auth helper for API routes.
  * - Cookie-based auth (web app requests)
  * - Bearer token auth (extension requests)
  */
-export async function getAuthUser(request: Request) {
+export async function getAuthUser(request: Request): Promise<AuthResult> {
   const authHeader = request.headers.get("Authorization");
 
   if (authHeader?.startsWith("Bearer ")) {
-    // Extension auth: use the access token directly
     const token = authHeader.slice(7);
-    const supabase = createClient<Database>(
+    const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
@@ -31,7 +34,7 @@ export async function getAuthUser(request: Request) {
   }
 
   // Web app auth: use cookie-based session
-  const supabase = await createSupabaseServer();
+  const supabase = (await createSupabaseServer()) as unknown as SupabaseClient;
   const {
     data: { user },
     error,

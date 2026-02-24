@@ -12,7 +12,7 @@ export default function App() {
   }, []);
 
   const handleGetStarted = () => {
-    chrome.tabs.create({ url: "http://localhost:3000/auth/login" });
+    chrome.tabs.create({ url: "http://localhost:3000/auth/login?from=extension" });
   };
 
   if (loading) {
