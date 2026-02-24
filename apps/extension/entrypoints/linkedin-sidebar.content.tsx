@@ -36,7 +36,7 @@ export default defineContentScript({
 });
 
 function SidebarRoot() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <>

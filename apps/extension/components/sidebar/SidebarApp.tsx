@@ -1,35 +1,50 @@
 import { useState, useEffect, useRef } from "react";
 import { getTokens } from "../../lib/auth";
-import { streamGenerate } from "../../lib/api";
+import { streamGenerate, apiFetch } from "../../lib/api";
 import { AuthGate } from "./AuthGate";
 import { GenerateForm } from "./GenerateForm";
 import { PostPreview } from "./PostPreview";
 
+type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
+
 export function SidebarApp() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<Status>("loading");
   const [content, setContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef(false);
 
   useEffect(() => {
-    checkAuth();
+    checkStatus();
 
-    // Re-check auth when storage changes (e.g., after login in another tab)
     const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
       if (changes.access_token) {
-        checkAuth();
+        checkStatus();
       }
     };
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
 
-  async function checkAuth() {
+  async function checkStatus() {
     const { access_token } = await getTokens();
-    setIsAuthenticated(!!access_token);
-    setLoading(false);
+    if (!access_token) {
+      setStatus("logged-out");
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/api/me");
+      const data = await res.json();
+      if (data.user?.onboarding_complete) {
+        setStatus("ready");
+      } else {
+        setStatus("needs-onboarding");
+      }
+    } catch {
+      // If API unreachable, assume ready if token exists
+      setStatus("ready");
+    }
   }
 
   async function handleGenerate(topic: string) {
@@ -56,7 +71,7 @@ export function SidebarApp() {
     abortRef.current = true;
   }
 
-  if (loading) {
+  if (status === "loading") {
     return (
       <div className="sidebar-content" style={{ textAlign: "center", paddingTop: 40 }}>
         <div className="spinner" />
@@ -73,9 +88,22 @@ export function SidebarApp() {
         </div>
       </div>
       <div className="sidebar-content">
-        {!isAuthenticated ? (
-          <AuthGate />
-        ) : (
+        {status === "logged-out" && <AuthGate />}
+
+        {status === "needs-onboarding" && (
+          <div className="auth-gate">
+            <h2>Almost there!</h2>
+            <p>Complete your voice setup so I can write posts that sound like you.</p>
+            <button
+              className="btn-primary"
+              onClick={() => window.open("http://localhost:3000/onboarding", "_blank")}
+            >
+              Complete Voice Setup
+            </button>
+          </div>
+        )}
+
+        {status === "ready" && (
           <>
             <GenerateForm
               onGenerate={handleGenerate}

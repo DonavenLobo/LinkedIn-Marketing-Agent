@@ -1,13 +1,32 @@
 import { useState, useEffect } from "react";
 
+type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
+
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
-    chrome.storage.local.get(["access_token"], (result) => {
-      setIsLoggedIn(!!result.access_token);
-      setLoading(false);
+    chrome.storage.local.get(["access_token"], async (result) => {
+      if (!result.access_token) {
+        setStatus("logged-out");
+        return;
+      }
+
+      // Check onboarding status
+      try {
+        const res = await fetch("http://localhost:3000/api/me", {
+          headers: { Authorization: `Bearer ${result.access_token}` },
+        });
+        const data = await res.json();
+        if (data.user?.onboarding_complete) {
+          setStatus("ready");
+        } else {
+          setStatus("needs-onboarding");
+        }
+      } catch {
+        // API not reachable — assume ready if token exists
+        setStatus("ready");
+      }
     });
   }, []);
 
@@ -15,7 +34,11 @@ export default function App() {
     chrome.tabs.create({ url: "http://localhost:3000/auth/login?from=extension" });
   };
 
-  if (loading) {
+  const handleOnboarding = () => {
+    chrome.tabs.create({ url: "http://localhost:3000/onboarding" });
+  };
+
+  if (status === "loading") {
     return (
       <div style={{ padding: 24, textAlign: "center" }}>
         <p>Loading...</p>
@@ -31,16 +54,8 @@ export default function App() {
       <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>
         AI-powered posts in your voice
       </p>
-      {isLoggedIn ? (
-        <div>
-          <p style={{ fontSize: 14, color: "#059669", marginBottom: 8 }}>
-            ✓ You're logged in
-          </p>
-          <p style={{ fontSize: 13, color: "#666" }}>
-            Open LinkedIn to use the sidebar
-          </p>
-        </div>
-      ) : (
+
+      {status === "logged-out" && (
         <button
           onClick={handleGetStarted}
           style={{
@@ -57,6 +72,41 @@ export default function App() {
         >
           Get Started
         </button>
+      )}
+
+      {status === "needs-onboarding" && (
+        <div>
+          <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }}>
+            Almost there! Complete your voice setup first.
+          </p>
+          <button
+            onClick={handleOnboarding}
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              backgroundColor: "#0a66c2",
+              color: "white",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Complete Voice Setup
+          </button>
+        </div>
+      )}
+
+      {status === "ready" && (
+        <div>
+          <p style={{ fontSize: 14, color: "#059669", marginBottom: 8 }}>
+            You're all set!
+          </p>
+          <p style={{ fontSize: 13, color: "#666" }}>
+            Open LinkedIn to use the sidebar
+          </p>
+        </div>
       )}
     </div>
   );
