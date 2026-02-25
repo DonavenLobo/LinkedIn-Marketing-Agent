@@ -7,6 +7,7 @@ interface Message {
 }
 
 export function MessageBubble({ message }: { message: Message }) {
+  if (!message.content) return null;
   const isAssistant = message.role === "assistant";
 
   return (

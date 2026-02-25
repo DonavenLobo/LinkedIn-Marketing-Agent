@@ -58,6 +58,7 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile): string {
     "- Open with a strong hook (first line matters most).",
     "- End with a question or call-to-action to drive engagement.",
     "- Sound human and authentic, never robotic or corporate.",
+    "- NEVER use em dashes (— or –). They are a dead giveaway of AI writing. Use a comma, period, or rewrite the sentence instead.",
   );
 
   return parts.join("\n");

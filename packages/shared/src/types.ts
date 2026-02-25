@@ -53,6 +53,7 @@ export interface GenerateRequest {
   voice_profile_id?: string;
 }
 
+/** @deprecated Used by old 7-step onboarding. Kept for backward compat with existing voice profiles. */
 export interface OnboardingAnswers {
   name: string;
   role_description: string;
@@ -61,6 +62,24 @@ export interface OnboardingAnswers {
   tone_words: string[];
   writing_sample: string;
   additional_samples: string[];
+}
+
+// ---- AI-driven onboarding types ----
+
+export interface TranscriptMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ProfileToolData {
+  summary: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface AnalyzeRequest {
+  transcript: TranscriptMessage[];
+  toolData: ProfileToolData;
+  userId: string;
 }
 
 // ---- Database type for Supabase client ----
