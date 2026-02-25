@@ -1,0 +1,85 @@
+  "transcript": [
+    {
+      "role": "assistant",
+      "content": "Hey! So you're thinking about showing up more on LinkedIn, yeah?\n\nBefore we dive in, I'm just curious: what do you actually do, and who are you hoping to reach with your posts?"
+    },
+    {
+      "role": "user",
+      "content": "So currently Im a machine learning engineer at Ford. I have been helping them create agentic systems for various different tasks. I was hired in to be part of the AI Media Generation team where we create AI media for marketing and design and we have an internal platform which we share with employees called the AI Design assistant. I have also been working with the Product concepting team to achieve one of Fords big bets: AI product concepting. So far we have created a deep research agent and social listening agent for the product concepting team which allows them to understand the market better when doing their research. Critically these are just tools we provide for people to have in their toolbox. Just really powerful tools.\n\nIn terms of who im trying to reach with my posts: anyone and everyone? I am trying to build my personal brand so that I can be widely viewed as a top talent in the industry"
+    },
+    {
+      "role": "assistant",
+      "content": "That's a solid setup. So you're doing really interesting work on the tooling side, not just building AI but making it actually useful for people doing real work.\n\nWhen you say you want to be seen as top talent in the industry, what does that actually look like to you? Like, are you going for \"this person knows cutting-edge ML\" or more \"this person gets how to ship AI that people actually use\"?"
+    },
+    {
+      "role": "user",
+      "content": "I think a bit of both. I want to be able to harness cutting-edge ML but importantly I have the ability to ship AI systems (and critically AI agentic systems) into production.\n\nSince I have been doing this for most of the past year, I have gotten quite a lot of experience trying different strategies and failing and eventually finding what works best for me (and production stability!)."
+    },
+    {
+      "role": "assistant",
+      "content": "Nice. That's actually the thing most people don't talk about, right? The gap between \"cool research\" and \"this actually runs in production without blowing up.\"\n\nSo you've got all these war stories from the past year of trying things and figuring out what sticks. When you think about sharing that on LinkedIn, what kind of stuff do you actually want to avoid? Like, what posts make you scroll past or cringe a little?"
+    },
+    {
+      "role": "user",
+      "content": "I dont want my posts to seem like they are obviously AI generated. I think when a post is an obvious copy paste of AI generated content - that makes me cringe a bit"
+    },
+    {
+      "role": "assistant",
+      "content": "Ha, yeah that tracks. Especially for someone literally building AI systems, it'd be pretty ironic if your posts read like ChatGPT output.\n\nSo what does that look like in practice for you? Like, are you thinking more raw and conversational, or just... actually sounding like a real person wrote it?"
+    },
+    {
+      "role": "user",
+      "content": "I would like it to sound raw and conversational but informative and useful info to share with other people in my position"
+    },
+    {
+      "role": "assistant",
+      "content": "Got it. Raw and conversational but still packed with actual useful stuff, not just vibes.\n\nDo you have a post or two you've written before that you felt good about? Or anything you've shared that got the reaction you were hoping for?"
+    },
+    {
+      "role": "user",
+      "content": "I liked this post I made and I had got a good response:\n\nAs my summer internship with the AI Image Generation group and the AI Advancement Center at Ford Motor Company comes to a close, I wanted to take a moment to share some of this incredible journey. 🚗💨\n\nThis summer, as a Machine Learning and Data Science intern, a few of the things I had the chance to do included:\n● Diving deep into state-of-the-art image generation models (diffusers).\n● Working with Ford's High Performance Computing (HPC) GPU Cluster (and almost breaking it... 😅).\n● Growing as a full-stack engineer thanks to the amazing support from everyone at the AI Advancement Center.\n● Hear inspiring talks from Ford leaders like Bill Ford, Jim Farley, Mike Amend, and many others – all incredibly approachable and insightful.\n\nAs my internship wraps up, I can confidently say I've had a lot of fun, met some incredible people, and learned more than I ever imagined. I hope to be back soon for more adventures!\n\nA big thank you to my manager, Austin Denha, and everyone who made this experience so memorable."
+    },
+    {
+      "role": "assistant",
+      "content": "Okay, I'm picking up on something here. This post is solid, but it reads pretty polished and structured, you know? Like, the bullets, the emojis in the right spots, the call-outs to leadership.\n\nBut you just said you want raw and conversational. So I'm wondering: is that the vibe you actually want now, or was that more what felt safe to post back then?"
+    },
+    {
+      "role": "user",
+      "content": "Yea I think this is what felt safe. And infact Im pretty sure I used chatgpt to help me make it."
+    },
+    {
+      "role": "assistant",
+      "content": "Ha, okay so that actually proves your point, right? You used AI to help and it came out polished but a little... corporate feeling?\n\nWhat would it sound like if you just told me one of those stories from this past year of shipping agentic systems, but like you were actually talking to someone over coffee? Don't overthink it, just tell me what happened."
+    },
+    {
+      "role": "user",
+      "content": "Sounds good! I can tell you the start of when we first heard about the product concepting initiative.\n\nBasically I heard from my manager early one morning 5/6 am saying he heard about an opportunity from Jim Baumbick about product concepting and he has been working on a project since 3am. Basically they mentioned that they receive someting called a blue letter, where they get a concept brief on a new proposed vehicle which is defined by a target market, engineering specs it needs to meet, etc. But it doesn't contain any visualization of the vehicle, so we created an AI Image generation model that rapidly created visuals of this concept for them. They loved it. So we got tasked with helping his team with product concepting by utilizing AI. I then built up an initial deep research agent using crew ai. It worked great but wasn't production ready. hence the beginning of the product concepting workstream"
+    },
+    {
+      "role": "assistant",
+      "content": "Okay that's way better. I can actually picture what happened. Your manager texting at 5am, the blue letter thing, them loving the visuals, then you building something that worked but needed real work to ship.\n\nThat's the actual story, right? Not the polished version.\n\nSo when you're thinking about what to post about on LinkedIn going forward, are you imagining more of that raw play-by-play stuff, or more like the lessons you pulled from it after the fact?"
+    },
+    {
+      "role": "user",
+      "content": "I think the whole post should have my voice but be raw. I dont want my posts to ramble on - just get to the point and and share my short takeaways."
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect. Short, to the point, your actual voice, and then the thing you learned from it.\n\nOne more thing I'm curious about: when you're writing naturally like that, do you tend to use humor at all? Like self-deprecating stuff, or just dry observations about how things went sideways?"
+    },
+    {
+      "role": "user",
+      "content": "Yup ofc! just depends on the situation though - i would say more dry humor/ observations on things goign sideways"
+    },
+    {
+      "role": "assistant",
+      "content": "Nice, that fits. The \"almost breaking the HPC cluster\" vibe from your internship post, but dialed up a bit more since you're being more raw.\n\nQuick one: do you have any other posts or writing samples lying around that you could paste in? Anything from work Slack, emails, or even just stuff you've written that felt like you?"
+    },
+    {
+      "role": "user",
+      "content": "Okay here is a reflection I did on my college essays:\n\n* Reflect upon your strengths and weaknesses in completing the project. \n\nI think in this project my strengths ended up being my research. I was able to find a lot of articles that would help support my argument. Furthermore it allowed me to gain an exterior and professional analysis on the topics and ideas that I was covering. \nMy main weakness was ‘stitching’ all the quotes together. It was very difficult to create a coherent argument exactly how I would want it because I had to use other people's words. However in the end I do believe it came together quite well and I think my argument can be seen clearly.\n\n* Describe the methods and modes that were the focus of your communicative work in the project. \n\nThe main modes I focused on were written and visual. The written communication was not in my words so it became difficult to adjust the language to target an audience. The visuals were in the form of images which helped supplement descriptions of ideas that I bring up. \n\n* Articulate areas and strategies you would like to focus on for continued improvement\n\nI would love to further improve my researching ability, I know I didn’t get to use too many sources from the georgia tech library but I would love to have known how I could have done that as well. \n\n* What is your argument or purpose, and how did you make the argument or purpose visible in your artifact? \n\nMy argument was that Kubrick deliberately used patterns, doubles, twins etc. to depict an underlying symmetry throughout the film. Finally leading to the symmetry between the natural and the supernatural. I made my argument visible by explicitly mentioning it at the introduction and then by supporting it with examples throughout the essay.\n\n* What are the defining features of the genre or media that you are using in this project, and how do you make use of these features? \n\nI think the defining features of this project in particular was that we were able to use quotes from other authors. So this essay ended up being an argument compiled by a dozen different authors all voicing their opinion on the subject.\n\n* If you had more time for revision, what would you change and why?\n\nIf I had more time for revision I think the only thing I would change is the inclusion of more book sources since I lacked many book sources in my final version.\n"
+    },
+    {
+      "role": "assistant",
+      "content": "Okay, so this is interesting because it's way more formal and structured than the 5am manager text story you just told me. This reads like you're answering for a grade, you know?\n\nBut I'm noticing something: when you're being reflective and honest about what actually happened (like the research agent that worked but wasn't production ready), that's where your real voice comes through.\n\nSo here's what I'm picking up on overall: you've got this natural, direct way of talking about real stuff that happened. You use dry humor. You're not flowery. You get to the point. And you actually know the difference between polished-for-an-audience and just being real.\n\nI think I've got enough to work with here. Sound good if we wrap up and I build out what your LinkedIn voice should actually sound like?"
+    }]
