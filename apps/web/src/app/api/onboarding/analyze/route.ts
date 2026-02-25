@@ -107,7 +107,7 @@ RULES:
 - For any dimension with low confidence, use a moderate default and acknowledge it
 - For conflicts between explicit and implicit signals, weight implicit behavior at 70%
 - signature_phrases should only include phrases the user actually used in their responses
-- avoid_phrases must include any phrases they rejected PLUS common AI LinkedIn clichés: "game-changer", "in today's fast-paced world", "let's dive in", "thrilled to announce", "synergy", "leverage", "circle back", "touch base", "move the needle", "at the end of the day"
+- avoid_phrases must include any phrases they rejected PLUS common AI LinkedIn clichés: "game-changer", "in today's fast-paced world", "let's dive in", "thrilled to announce", "I'm excited to announce", "synergy", "leverage", "circle back", "touch base", "move the needle", "at the end of the day"
 - system_prompt should be a detailed 3-4 paragraph ghostwriter instruction that captures voice, style, vocabulary, and preferences. Write it in second person directed at an AI ghostwriter ("Write posts that sound like...")
 - The system_prompt MUST include this exact rule: "NEVER use em dashes (— or –). They are a dead giveaway of AI writing. Use a comma, period, or rewrite the sentence instead."
 - All formality must be exactly one of: "casual", "balanced", "formal"
@@ -226,6 +226,11 @@ ${voiceData.system_prompt ? `ADDITIONAL VOICE NOTES:\n${voiceData.system_prompt}
 
 THEIR ONBOARDING CONVERSATION (read this to understand how they actually talk and write):
 ${formattedTranscript}
+
+LINKEDIN HOOK PRINCIPLES (the first ~210 characters appear before "See more" — make every word count):
+- Effective hook formulas: surprising stat, contrarian take ("Everything you've been told about X is wrong"), personal story opener ("I got fired 3 years ago..."), direct question, or bold declarative claim
+- Never open with "I'm excited to announce..." — it is the most overused opener on LinkedIn
+- Front-load the key message; short sentences (under 12 words) perform best on mobile
 
 WRITING RULES:
 - NEVER use em dashes (— or –). Use a comma, a period, or restructure the sentence.
