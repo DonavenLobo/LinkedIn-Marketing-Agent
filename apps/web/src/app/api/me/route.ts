@@ -15,18 +15,29 @@ export async function GET(request: Request) {
     );
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  const { data: voiceProfile } = await supabase
+  const { data: voiceProfile, error: vpError } = await supabase
     .from("voice_profiles")
     .select("id, name, is_active")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .single();
+
+  console.log("[/api/me]", {
+    userId: user.id,
+    profileError: profileError?.message,
+    onboarding_complete: profile?.onboarding_complete,
+    vpError: vpError?.message,
+    hasVoiceProfile: !!voiceProfile,
+  });
+
+  // Onboarding is complete if the flag is set OR a voice profile already exists
+  const onboardingComplete = profile?.onboarding_complete === true || !!voiceProfile;
 
   return NextResponse.json(
     {
@@ -35,7 +46,7 @@ export async function GET(request: Request) {
         email: user.email,
         display_name: profile?.display_name,
         avatar_url: profile?.avatar_url,
-        onboarding_complete: profile?.onboarding_complete ?? false,
+        onboarding_complete: onboardingComplete,
       },
       voice_profile: voiceProfile ?? null,
     },

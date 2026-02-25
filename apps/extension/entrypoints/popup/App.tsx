@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
+import { getTokens } from "../../lib/auth";
 
 type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
 
@@ -6,17 +8,21 @@ export default function App() {
   const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
-    chrome.storage.local.get(["access_token"], async (result) => {
-      if (!result.access_token) {
+    async function checkStatus() {
+      const { access_token } = await getTokens();
+      if (!access_token) {
         setStatus("logged-out");
         return;
       }
 
-      // Check onboarding status
       try {
-        const res = await fetch("http://localhost:3000/api/me", {
-          headers: { Authorization: `Bearer ${result.access_token}` },
-        });
+        // apiFetch handles automatic token refresh on 401
+        const res = await apiFetch("/api/me");
+        if (res.status === 401) {
+          // Refresh also failed — session fully expired, re-login required
+          setStatus("logged-out");
+          return;
+        }
         const data = await res.json();
         if (data.user?.onboarding_complete) {
           setStatus("ready");
@@ -27,7 +33,9 @@ export default function App() {
         // API not reachable — assume ready if token exists
         setStatus("ready");
       }
-    });
+    }
+
+    checkStatus();
   }, []);
 
   const handleGetStarted = () => {
@@ -101,7 +109,7 @@ export default function App() {
       {status === "ready" && (
         <div>
           <p style={{ fontSize: 14, color: "#059669", marginBottom: 8 }}>
-            You're all set!
+            You&apos;re all set!
           </p>
           <p style={{ fontSize: 13, color: "#666" }}>
             Open LinkedIn to use the sidebar

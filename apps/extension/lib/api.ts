@@ -1,6 +1,23 @@
-import { getTokens } from "./auth";
+import { getTokens, refreshTokens } from "./auth";
 
 const API_URL = "http://localhost:3000";
+
+async function makeRequest(
+  path: string,
+  options: RequestInit,
+  token: string | null
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return fetch(`${API_URL}${path}`, { ...options, headers });
+}
 
 export async function apiFetch(
   path: string,
@@ -8,19 +25,17 @@ export async function apiFetch(
 ): Promise<Response> {
   const { access_token } = await getTokens();
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
+  let response = await makeRequest(path, options, access_token);
 
-  if (access_token) {
-    headers["Authorization"] = `Bearer ${access_token}`;
+  // On 401, attempt a token refresh once and retry.
+  if (response.status === 401) {
+    const newToken = await refreshTokens();
+    if (newToken) {
+      response = await makeRequest(path, options, newToken);
+    }
   }
 
-  return fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  return response;
 }
 
 /**

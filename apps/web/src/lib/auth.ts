@@ -16,9 +16,11 @@ export async function getAuthUser(request: Request): Promise<AuthResult> {
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
+    // Pass the token as a global Authorization header so RLS sees auth.uid() correctly
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
     const {

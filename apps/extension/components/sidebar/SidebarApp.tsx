@@ -26,6 +26,13 @@ export function SidebarApp() {
     return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
 
+  // Poll every 10 seconds while waiting for onboarding to complete
+  useEffect(() => {
+    if (status !== "needs-onboarding") return;
+    const interval = setInterval(checkStatus, 10_000);
+    return () => clearInterval(interval);
+  }, [status]);
+
   async function checkStatus() {
     const { access_token } = await getTokens();
     if (!access_token) {
@@ -35,6 +42,12 @@ export function SidebarApp() {
 
     try {
       const res = await apiFetch("/api/me");
+      // apiFetch already attempted a token refresh on 401.
+      // If still 401, the refresh token is also expired — show login.
+      if (res.status === 401) {
+        setStatus("logged-out");
+        return;
+      }
       const data = await res.json();
       if (data.user?.onboarding_complete) {
         setStatus("ready");
@@ -99,6 +112,13 @@ export function SidebarApp() {
               onClick={() => window.open("http://localhost:3000/onboarding", "_blank")}
             >
               Complete Voice Setup
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ marginTop: 8 }}
+              onClick={checkStatus}
+            >
+              I&apos;m done — refresh
             </button>
           </div>
         )}

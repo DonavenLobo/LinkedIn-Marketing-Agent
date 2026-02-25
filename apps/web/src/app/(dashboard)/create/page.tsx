@@ -50,7 +50,7 @@ export default function CreatePage() {
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g. I just closed a $15M multifamily acquisition in Austin..."
               rows={4}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
