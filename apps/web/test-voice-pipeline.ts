@@ -60,7 +60,7 @@ async function main() {
   };
 
   // ── PHASE 1: Linguistic Analysis ──────────────────────────────────────────
-  divider("PHASE 1 — Linguistic Analysis (Haiku)");
+  divider("PHASE 1 — Linguistic Analysis (Sonnet)");
 
   const formattedTranscript = formatTranscript(transcript);
 
@@ -104,7 +104,7 @@ FULL CONVERSATION TRANSCRIPT:
 ${formattedTranscript}`;
 
   const { text: analysis } = await generateText({
-    model: anthropic("claude-haiku-4-5-20251001"),
+    model: anthropic("claude-sonnet-4-6"),
     prompt: phase1Prompt,
     temperature: 0.2,
   });
@@ -112,7 +112,7 @@ ${formattedTranscript}`;
   console.log(analysis);
 
   // ── PHASE 2: Voice Profile JSON ────────────────────────────────────────────
-  divider("PHASE 2 — Voice Profile JSON (Haiku)");
+  divider("PHASE 2 — Voice Profile JSON (Sonnet)");
 
   const phase2Prompt = `Based on the linguistic analysis below, generate a voice profile optimized for guiding an AI ghostwriter to write LinkedIn posts that sound authentically like this user.
 
@@ -145,7 +145,7 @@ Respond ONLY with valid JSON matching this exact schema:
 }`;
 
   const { text: profileJson } = await generateText({
-    model: anthropic("claude-haiku-4-5-20251001"),
+    model: anthropic("claude-sonnet-4-6"),
     prompt: phase2Prompt,
     temperature: 0.3,
   });

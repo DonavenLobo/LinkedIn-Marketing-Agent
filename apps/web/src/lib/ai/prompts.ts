@@ -1,4 +1,4 @@
-import type { VoiceProfile } from "@linkedin-agent/shared";
+import type { VoiceProfile, PostInteraction } from "@linkedin-agent/shared";
 
 /**
  * Research-backed best practices for effective LinkedIn text posts.
@@ -107,11 +107,12 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile): string {
 }
 
 /**
- * Builds the user prompt with topic and optional few-shot examples.
+ * Builds the user prompt with topic, optional few-shot examples, and optional learning context.
  */
 export function buildUserPrompt(
   topic: string,
-  samplePosts: string[]
+  samplePosts: string[],
+  learningContext?: string
 ): string {
   const parts: string[] = [];
 
@@ -123,9 +124,73 @@ export function buildUserPrompt(
     parts.push("---\n");
   }
 
+  if (learningContext) {
+    parts.push(learningContext);
+  }
+
   parts.push(
     `Write a LinkedIn post about the following topic: ${topic}`
   );
 
   return parts.join("\n");
+}
+
+/**
+ * Transforms recent post interactions into a few-shot learning context block.
+ * Injected into buildUserPrompt so approved posts, feedback revisions, and edits
+ * progressively improve voice mimicking over time.
+ */
+export function buildLearningContext(interactions: PostInteraction[]): string {
+  if (interactions.length === 0) return "";
+
+  const parts: string[] = [
+    "--- VOICE LEARNING FROM PAST INTERACTIONS ---",
+    "The user has provided feedback on previous posts. Use these signals to better match their voice:\n",
+  ];
+
+  for (const interaction of interactions.slice(0, 8)) {
+    switch (interaction.interaction_type) {
+      case "approve":
+        parts.push(
+          `APPROVED POST (the user was happy with this — match this style and tone):\n${interaction.final_text}\n`
+        );
+        break;
+      case "feedback":
+        parts.push(
+          `FEEDBACK EXAMPLE:\n` +
+          `Original draft: ${interaction.original_text}\n` +
+          `User's feedback: "${interaction.feedback_text}"\n` +
+          `Revised version they accepted: ${interaction.final_text}\n`
+        );
+        break;
+      case "edit":
+        parts.push(
+          `EDIT EXAMPLE (the user manually changed the text — pay close attention to what they changed and why):\n` +
+          `AI wrote: ${interaction.original_text}\n` +
+          `User changed it to: ${interaction.final_text}\n`
+        );
+        break;
+    }
+  }
+
+  parts.push("--- END VOICE LEARNING ---\n");
+  return parts.join("\n");
+}
+
+/**
+ * Builds the user prompt for the feedback/revision endpoint.
+ * Gives the model the current draft and user's feedback to produce a rewrite.
+ */
+export function buildFeedbackPrompt(
+  currentText: string,
+  feedback: string,
+  topic: string
+): string {
+  return [
+    `Here is a LinkedIn post I generated about: ${topic}\n`,
+    `Current version:\n${currentText}\n`,
+    `The user wants these changes: "${feedback}"\n`,
+    `Rewrite the post incorporating their feedback while keeping the same topic and core message.`,
+    `Write ONLY the revised post text. No commentary, labels, or explanation.`,
+  ].join("\n");
 }

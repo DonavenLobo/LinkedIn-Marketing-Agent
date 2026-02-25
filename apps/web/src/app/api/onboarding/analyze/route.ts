@@ -95,7 +95,7 @@ FULL CONVERSATION TRANSCRIPT:
 ${formattedTranscript}`;
 
     const { text: analysis } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic("claude-sonnet-4-6"),
       prompt: phase1Prompt,
       temperature: 0.2,
     });
@@ -132,7 +132,7 @@ Respond ONLY with valid JSON matching this exact schema:
 }`;
 
     const { text: profileJson } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic("claude-sonnet-4-6"),
       prompt: phase2Prompt,
       temperature: 0.3,
     });

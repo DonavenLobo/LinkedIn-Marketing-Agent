@@ -1,12 +1,12 @@
 ## Criteria Table:
 
-- Specific Market: Real estate (Build in a way that is compatible with different industries)
-- Mimic User/customer tone of voice [Defining feature! Needs to be configured into profile] 
+- Specific Market: Real estate (Build in a way that is compatible with different industries) - [currrently generic]
+- Mimic User/customer tone of voice [Defining feature! Needs to be configured into profile] - Doing a good job at the moment 
 - Seamless integration with current workflows (easy to find/ work with)
-    - Chrome plugin?
-- Use Case/Platform: LinkedIn (Build in a way that is compatible with different platforms)
+    - Chrome plugin? - Created chrome plug in
+- Use Case/Platform: LinkedIn (Build in a way that is compatible with different platforms) - done
 - Output: Suggested Posts in users tone of voice (Build in a way that text, pictures, graphs, carousels, polls etc can be used within the post)
-- Interview style onboarding 
+- Interview style onboarding - done
 - Chat based platform to define next post
 - ICP: SMB Private Equity / Mom & Pop Owners / Capital Raisers looking for investor leads & brand awareness growth on - LinkedIn (Should be able to be run by 1 person, however build in a way that multiple users can have access to the platform)
 - Once set up, should take <5 mins to post

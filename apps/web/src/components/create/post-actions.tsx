@@ -1,14 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useCompletion } from "ai/react";
+
+type Mode = "preview" | "feedback" | "editing";
 
 interface PostActionsProps {
   content: string;
+  postId: string | null;
+  topic: string;
   onRegenerate: () => void;
+  onContentUpdate: (newContent: string) => void;
 }
 
-export function PostActions({ content, onRegenerate }: PostActionsProps) {
+export function PostActions({
+  content,
+  postId,
+  topic,
+  onRegenerate,
+  onContentUpdate,
+}: PostActionsProps) {
+  const [mode, setMode] = useState<Mode>("preview");
   const [copied, setCopied] = useState(false);
+  const [approved, setApproved] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [editText, setEditText] = useState(content);
+  const [isSaving, setIsSaving] = useState(false);
+  const currentContentRef = useRef(content);
+  currentContentRef.current = content;
+
+  // Feedback streaming via useCompletion
+  const {
+    complete,
+    completion: feedbackCompletion,
+    isLoading: isFeedbackStreaming,
+  } = useCompletion({
+    api: "/api/post/feedback",
+    onFinish: (_, finalCompletion) => {
+      onContentUpdate(finalCompletion);
+      setFeedbackText("");
+      setMode("preview");
+    },
+  });
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
@@ -16,20 +49,169 @@ export function PostActions({ content, onRegenerate }: PostActionsProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleApprove = async () => {
+    if (!postId) return;
+    setIsSaving(true);
+    try {
+      await fetch("/api/post/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ generated_post_id: postId, final_text: content }),
+      });
+      setApproved(true);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSendFeedback = async () => {
+    if (!feedbackText.trim() || !postId) return;
+    await complete("", {
+      body: {
+        generated_post_id: postId,
+        feedback: feedbackText,
+        current_text: currentContentRef.current,
+        topic,
+      },
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!postId || !editText.trim()) return;
+    setIsSaving(true);
+    try {
+      await fetch("/api/post/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          generated_post_id: postId,
+          original_text: currentContentRef.current,
+          edited_text: editText,
+        }),
+      });
+      onContentUpdate(editText);
+      setMode("preview");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // While streaming feedback, show the incoming content
+  const displayFeedbackContent = isFeedbackStreaming ? feedbackCompletion : null;
+
+  if (mode === "feedback") {
+    return (
+      <div className="space-y-3">
+        {displayFeedbackContent && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-gray-800 whitespace-pre-wrap">
+            {displayFeedbackContent}
+            <span className="inline-block w-1 h-4 bg-blue-500 animate-pulse ml-0.5 align-text-bottom" />
+          </div>
+        )}
+        <textarea
+          value={feedbackText}
+          onChange={(e) => setFeedbackText(e.target.value)}
+          placeholder="What would you change? e.g. 'Make it shorter and punchier' or 'Less formal, more like how I actually talk'"
+          rows={3}
+          disabled={isFeedbackStreaming}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              handleSendFeedback();
+            }
+          }}
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={handleSendFeedback}
+            disabled={isFeedbackStreaming || !feedbackText.trim() || !postId}
+            className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {isFeedbackStreaming ? "Rewriting..." : "Send Feedback"}
+          </button>
+          <button
+            onClick={() => { setMode("preview"); setFeedbackText(""); }}
+            disabled={isFeedbackStreaming}
+            className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition"
+          >
+            Cancel
+          </button>
+        </div>
+        <p className="text-xs text-gray-400">Tip: Cmd+Enter to send</p>
+      </div>
+    );
+  }
+
+  if (mode === "editing") {
+    return (
+      <div className="space-y-3">
+        <textarea
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          rows={10}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={handleSaveEdit}
+            disabled={isSaving || !editText.trim()}
+            className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {isSaving ? "Saving..." : "Save Edit"}
+          </button>
+          <button
+            onClick={() => { setMode("preview"); setEditText(content); }}
+            className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Preview mode (default)
   return (
-    <div className="flex gap-3">
-      <button
-        onClick={handleCopy}
-        className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition"
-      >
-        {copied ? "Copied!" : "Copy to Clipboard"}
-      </button>
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          onClick={handleApprove}
+          disabled={isSaving || approved || !postId}
+          className="flex-1 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          {approved ? "Approved!" : isSaving ? "Saving..." : "Approve"}
+        </button>
+        <button
+          onClick={() => { setMode("feedback"); setFeedbackText(""); }}
+          disabled={!postId}
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition"
+        >
+          Give Feedback
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setMode("editing"); setEditText(content); }}
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+        >
+          Edit Post
+        </button>
+        <button
+          onClick={handleCopy}
+          className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
       <button
         onClick={onRegenerate}
-        className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+        className="w-full rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 transition"
       >
-        Regenerate
+        Regenerate from scratch
       </button>
+      {!postId && (
+        <p className="text-xs text-gray-400 text-center">Approve/Feedback/Edit require the post to finish saving...</p>
+      )}
     </div>
   );
 }

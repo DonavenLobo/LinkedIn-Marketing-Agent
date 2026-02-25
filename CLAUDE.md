@@ -12,7 +12,7 @@ Core moat: tone-mimicking through conversational onboarding + progressive voice 
 - API: Next.js Route Handlers (no tRPC — hackathon simplification)
 - UI: shadcn/ui + Tailwind CSS (web only); hand-written CSS in extension Shadow DOM
 - AI: Vercel AI SDK + @ai-sdk/anthropic
-- LLM: claude-sonnet-4-6 (generation), claude-haiku-4-5-20251001 (analysis)
+- LLM: claude-sonnet-4-6 (generation + analysis), claude-haiku-4-5-20251001 (onboarding chat only)
 
 ## Structure
 apps/web — Next.js dashboard + API backend (onboarding, post creation, all Route Handlers)

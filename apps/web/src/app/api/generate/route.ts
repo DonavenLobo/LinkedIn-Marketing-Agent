@@ -1,8 +1,8 @@
-import { streamText } from "ai";
+import { streamText, StreamData } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { getAuthUser, corsHeaders } from "@/lib/auth";
-import { buildSystemPrompt, buildUserPrompt } from "@/lib/ai/prompts";
-import type { VoiceProfile } from "@linkedin-agent/shared";
+import { buildSystemPrompt, buildUserPrompt, buildLearningContext } from "@/lib/ai/prompts";
+import type { VoiceProfile, PostInteraction } from "@linkedin-agent/shared";
 
 export async function OPTIONS() {
   return new Response(null, { headers: corsHeaders });
@@ -55,8 +55,20 @@ export async function POST(request: Request) {
     );
   }
 
+  // Fetch recent interactions for progressive learning context
+  const { data: interactions } = await supabase
+    .from("post_interactions")
+    .select("*")
+    .eq("voice_profile_id", voiceProfile.id)
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  const learningContext = buildLearningContext((interactions as PostInteraction[]) || []);
   const systemPrompt = buildSystemPrompt(voiceProfile);
-  const userPrompt = buildUserPrompt(topic, voiceProfile.sample_posts || []);
+  const userPrompt = buildUserPrompt(topic, voiceProfile.sample_posts || [], learningContext);
+
+  // StreamData lets us send the saved post's ID back to the client
+  const streamData = new StreamData();
 
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
@@ -64,19 +76,27 @@ export async function POST(request: Request) {
     prompt: userPrompt,
     temperature: 0.7,
     onFinish: async ({ text, usage }) => {
-      // Save generated post to database
-      await supabase.from("generated_posts").insert({
-        user_id: user.id,
-        voice_profile_id: voiceProfile.id,
-        user_input: topic,
-        generated_text: text,
-        model_used: "claude-sonnet-4-6",
-        tokens_used: usage?.totalTokens ?? null,
-      });
+      const { data: post } = await supabase
+        .from("generated_posts")
+        .insert({
+          user_id: user.id,
+          voice_profile_id: voiceProfile.id,
+          user_input: topic,
+          generated_text: text,
+          model_used: "claude-sonnet-4-6",
+          tokens_used: usage?.totalTokens ?? null,
+        })
+        .select("id")
+        .single();
+
+      if (post) {
+        streamData.append({ postId: post.id });
+      }
+      streamData.close();
     },
   });
 
-  const response = result.toDataStreamResponse();
+  const response = result.toDataStreamResponse({ data: streamData });
 
   // Add CORS headers to the streaming response
   const headers = new Headers(response.headers);

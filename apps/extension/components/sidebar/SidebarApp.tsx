@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { getTokens } from "../../lib/auth";
-import { streamGenerate, apiFetch } from "../../lib/api";
+import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from "../../lib/api";
 import { AuthGate } from "./AuthGate";
 import { GenerateForm } from "./GenerateForm";
 import { PostPreview } from "./PostPreview";
@@ -10,7 +10,10 @@ type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
 export function SidebarApp() {
   const [status, setStatus] = useState<Status>("loading");
   const [content, setContent] = useState("");
+  const [postId, setPostId] = useState<string | null>(null);
+  const [topic, setTopic] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isFeedbackStreaming, setIsFeedbackStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef(false);
 
@@ -42,8 +45,6 @@ export function SidebarApp() {
 
     try {
       const res = await apiFetch("/api/me");
-      // apiFetch already attempted a token refresh on 401.
-      // If still 401, the refresh token is also expired — show login.
       if (res.status === 401) {
         setStatus("logged-out");
         return;
@@ -55,20 +56,21 @@ export function SidebarApp() {
         setStatus("needs-onboarding");
       }
     } catch {
-      // If API unreachable, assume ready if token exists
       setStatus("ready");
     }
   }
 
-  async function handleGenerate(topic: string) {
+  async function handleGenerate(newTopic: string) {
     setError(null);
     setContent("");
+    setPostId(null);
+    setTopic(newTopic);
     setIsStreaming(true);
     abortRef.current = false;
 
     try {
       let accumulated = "";
-      for await (const chunk of streamGenerate(topic)) {
+      for await (const chunk of streamGenerate(newTopic, (id) => setPostId(id))) {
         if (abortRef.current) break;
         accumulated += chunk;
         setContent(accumulated);
@@ -77,6 +79,46 @@ export function SidebarApp() {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setIsStreaming(false);
+    }
+  }
+
+  async function handleFeedback(feedback: string) {
+    if (!postId) return;
+    setIsFeedbackStreaming(true);
+    abortRef.current = false;
+    const originalContent = content;
+
+    try {
+      let accumulated = "";
+      for await (const chunk of streamFeedback(postId, originalContent, feedback, topic)) {
+        if (abortRef.current) break;
+        accumulated += chunk;
+        setContent(accumulated);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Feedback failed");
+      setContent(originalContent);
+    } finally {
+      setIsFeedbackStreaming(false);
+    }
+  }
+
+  async function handleApprove() {
+    if (!postId) return;
+    try {
+      await approvePost(postId, content);
+    } catch {
+      // Non-critical — don't surface to user
+    }
+  }
+
+  async function handleEdit(originalText: string, editedText: string) {
+    if (!postId) return;
+    try {
+      await saveEdit(postId, originalText, editedText);
+      setContent(editedText);
+    } catch {
+      // Non-critical
     }
   }
 
@@ -131,7 +173,21 @@ export function SidebarApp() {
               onStop={handleStop}
             />
             {error && <div className="error-msg">{error}</div>}
-            <PostPreview content={content} isStreaming={isStreaming} />
+            <PostPreview
+              content={content}
+              isStreaming={isStreaming}
+              isFeedbackStreaming={isFeedbackStreaming}
+              postId={postId}
+              topic={topic}
+              onApprove={handleApprove}
+              onFeedback={handleFeedback}
+              onEdit={handleEdit}
+              onNewPost={() => {
+                setContent("");
+                setPostId(null);
+                document.querySelector(".sidebar-content")?.scrollTo(0, 0);
+              }}
+            />
           </>
         )}
       </div>

@@ -43,6 +43,20 @@ export interface GeneratedPost {
   generated_text: string;
   model_used: string | null;
   tokens_used: number | null;
+  status: "draft" | "approved" | "revised";
+  created_at: string;
+}
+
+export interface PostInteraction {
+  id: string;
+  user_id: string;
+  generated_post_id: string;
+  voice_profile_id: string | null;
+  interaction_type: "approve" | "feedback" | "edit";
+  final_text: string;
+  feedback_text: string | null;
+  original_text: string | null;
+  revision_count: number;
   created_at: string;
 }
 
@@ -101,6 +115,11 @@ export interface Database {
         Row: GeneratedPost;
         Insert: Partial<GeneratedPost> & { user_id: string; user_input: string; generated_text: string };
         Update: Partial<GeneratedPost>;
+      };
+      post_interactions: {
+        Row: PostInteraction;
+        Insert: Partial<PostInteraction> & { user_id: string; generated_post_id: string; interaction_type: PostInteraction["interaction_type"]; final_text: string };
+        Update: Partial<PostInteraction>;
       };
     };
   };

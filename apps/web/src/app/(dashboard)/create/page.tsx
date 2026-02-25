@@ -7,23 +7,56 @@ import { PostActions } from "@/components/create/post-actions";
 
 export default function CreatePage() {
   const [topic, setTopic] = useState("");
+  const [postId, setPostId] = useState<string | null>(null);
+  // displayContent tracks the current post text, including feedback revisions and edits
+  const [displayContent, setDisplayContent] = useState("");
 
-  const { completion, input, setInput, handleSubmit, isLoading, stop } =
+  const { completion, input, setInput, handleSubmit, isLoading, stop, setCompletion, data } =
     useCompletion({
       api: "/api/generate",
       body: { topic },
-      onFinish: () => {
-        // Post saved server-side in the onFinish callback
+      onResponse: () => {
+        // Reset state at the start of each new generation
+        setPostId(null);
+        setDisplayContent("");
+      },
+      onFinish: (_, finalCompletion) => {
+        setDisplayContent(finalCompletion);
       },
     });
+
+  // Extract postId from the StreamData annotations sent by the generate route
+  const resolvedPostId = postId ?? (
+    Array.isArray(data)
+      ? (data.find(
+          (d): d is { postId: string } =>
+            typeof d === "object" && d !== null && "postId" in d
+        )?.postId ?? null)
+      : null
+  );
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic.trim()) return;
-    // useCompletion needs `input` set — we pass topic via body
+    setPostId(null);
+    setDisplayContent("");
     setInput(topic);
     handleSubmit(e);
   };
+
+  const handleRegenerate = () => {
+    setPostId(null);
+    setDisplayContent("");
+    setInput(topic);
+    const form = document.querySelector("form");
+    if (form) form.requestSubmit();
+  };
+
+  // While streaming: show live completion. After done: show displayContent (updated by feedback/edit).
+  const previewContent = isLoading ? completion : (displayContent || completion);
+
+  // Suppress unused variable warning — `input` is needed to keep useCompletion in sync
+  void input;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -76,9 +109,7 @@ export default function CreatePage() {
 
         {/* Quick topic suggestions */}
         <div>
-          <p className="text-xs font-medium text-gray-500 mb-2">
-            QUICK IDEAS
-          </p>
+          <p className="text-xs font-medium text-gray-500 mb-2">QUICK IDEAS</p>
           <div className="flex flex-wrap gap-2">
             {[
               "Share a recent win",
@@ -101,13 +132,18 @@ export default function CreatePage() {
 
       {/* Right: Preview */}
       <div className="space-y-4">
-        <LinkedInPreview content={completion} isLoading={isLoading} />
-        {completion && !isLoading && (
-          <PostActions content={completion} onRegenerate={() => {
-            setInput(topic);
-            const form = document.querySelector("form");
-            if (form) form.requestSubmit();
-          }} />
+        <LinkedInPreview content={previewContent} isLoading={isLoading} />
+        {previewContent && !isLoading && (
+          <PostActions
+            content={previewContent}
+            postId={resolvedPostId}
+            topic={topic}
+            onRegenerate={handleRegenerate}
+            onContentUpdate={(newContent) => {
+              setDisplayContent(newContent);
+              setCompletion(newContent);
+            }}
+          />
         )}
       </div>
     </div>
