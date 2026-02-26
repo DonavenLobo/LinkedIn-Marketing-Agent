@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { generateHashtags } from "../../lib/api";
 
 type Mode = "preview" | "feedback" | "editing";
 
@@ -27,6 +28,8 @@ export function PostPreview({
 }: PostPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [hashtagsLoading, setHashtagsLoading] = useState(false);
   const [mode, setMode] = useState<Mode>("preview");
   const [feedbackText, setFeedbackText] = useState("");
   const [editText, setEditText] = useState("");
@@ -40,9 +43,16 @@ export function PostPreview({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     onApprove();
     setApproved(true);
+    setHashtagsLoading(true);
+    try {
+      const tags = await generateHashtags(content);
+      setHashtags(tags);
+    } finally {
+      setHashtagsLoading(false);
+    }
   };
 
   const handleSendFeedback = () => {
@@ -196,6 +206,41 @@ export function PostPreview({
                 New Post
               </button>
             </>
+          )}
+        </div>
+      )}
+
+      {(approved || hashtagsLoading) && !isStreaming && (
+        <div className="hashtag-suggestions">
+          <div className="hashtag-suggestions-header">
+            <span className="hashtag-suggestions-label">SUGGESTED HASHTAGS</span>
+            {!hashtagsLoading && hashtags.length > 0 && (
+              <button
+                className="copy-all-btn"
+                onClick={() => navigator.clipboard.writeText(hashtags.join(" "))}
+              >
+                Copy all
+              </button>
+            )}
+          </div>
+          {hashtagsLoading ? (
+            <div className="hashtag-skeleton">
+              <div className="skeleton-pill" />
+              <div className="skeleton-pill" />
+              <div className="skeleton-pill" />
+            </div>
+          ) : (
+            <div className="hashtag-chips">
+              {hashtags.map((tag) => (
+                <button
+                  key={tag}
+                  className="hashtag-chip"
+                  onClick={() => navigator.clipboard.writeText(tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       )}

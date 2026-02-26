@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useCompletion } from "ai/react";
+import { HashtagSuggestions } from "./hashtag-suggestions";
 
 type Mode = "preview" | "feedback" | "editing";
 
@@ -211,6 +212,9 @@ export function PostActions({
       </button>
       {!postId && (
         <p className="text-xs text-[#8a8a8a] text-center">Approve/Feedback/Edit require the post to finish saving...</p>
+      )}
+      {approved && postId && (
+        <HashtagSuggestions postContent={content} postId={postId} />
       )}
     </div>
   );

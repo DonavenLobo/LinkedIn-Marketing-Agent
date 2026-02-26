@@ -417,6 +417,19 @@
 /* Generating indicator */
 .generating-indicator { display: flex; align-items: center; gap: 10px; padding: 12px; background: #eff4ff; border: 1px solid rgba(37,99,235,0.2); border-radius: 10px; font-size: 13px; color: #2563eb; font-weight: 500; margin-bottom: 8px; }
 
+/* Hashtag suggestions */
+.hashtag-suggestions { margin-top: 12px; border: 1px solid #e2e2dc; border-radius: 10px; background: #f7f7f5; padding: 12px; }
+.hashtag-suggestions-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.hashtag-suggestions-label { font-size: 10px; font-weight: 600; color: #8a8a8a; letter-spacing: 0.05em; }
+.copy-all-btn { font-size: 11px; color: #2563eb; background: none; border: none; cursor: pointer; padding: 0; font-family: 'DM Sans', system-ui, sans-serif; }
+.copy-all-btn:hover { text-decoration: underline; }
+.hashtag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hashtag-chip { padding: 3px 10px; background: #fff; border: 1px solid #e2e2dc; border-radius: 24px; font-size: 12px; font-family: 'DM Sans', system-ui, sans-serif; color: #2563eb; cursor: pointer; transition: border-color 0.15s; }
+.hashtag-chip:hover { border-color: #2563eb; }
+.hashtag-skeleton { display: flex; gap: 6px; }
+.skeleton-pill { height: 26px; width: 72px; background: #eeeee9; border-radius: 24px; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
 /* Error state */
 .error-msg {
   background: #fef2f2;

@@ -192,6 +192,17 @@ export async function approvePost(
   });
 }
 
+/** Generate strategic hashtags for an approved post. */
+export async function generateHashtags(postContent: string): Promise<string[]> {
+  const response = await apiFetch("/api/post/hashtags", {
+    method: "POST",
+    body: JSON.stringify({ post_content: postContent }),
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.hashtags ?? [];
+}
+
 /** Record manual edits the user made to a generated post. */
 export async function saveEdit(
   generatedPostId: string,
