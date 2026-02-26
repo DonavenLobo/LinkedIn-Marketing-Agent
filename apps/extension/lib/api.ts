@@ -147,6 +147,40 @@ export async function* streamFeedback(
   yield* parseDataStream(response);
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Send a message in the post chat intake flow.
+ * Streams AI response chunks via onChunk; calls onReadyToGenerate when the
+ * ready_to_generate tool fires (via the 2: annotation channel).
+ */
+export async function sendPostChatMessage(
+  messages: ChatMessage[],
+  onChunk: (text: string) => void,
+  onReadyToGenerate: (enrichedTopic: string) => void
+): Promise<void> {
+  const response = await apiFetch("/api/post/chat", {
+    method: "POST",
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Chat failed" }));
+    throw new Error(err.error || "Chat failed");
+  }
+
+  for await (const chunk of parseDataStream(response, (ann) => {
+    if (typeof ann.enrichedTopic === "string") {
+      onReadyToGenerate(ann.enrichedTopic);
+    }
+  })) {
+    onChunk(chunk);
+  }
+}
+
 /** Record that the user approved a post as-is. */
 export async function approvePost(
   generatedPostId: string,

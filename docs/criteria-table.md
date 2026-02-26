@@ -7,9 +7,9 @@
 - Use Case/Platform: LinkedIn (Build in a way that is compatible with different platforms) - done
 - Output: Suggested Posts in users tone of voice (Build in a way that text, pictures, graphs, carousels, polls etc can be used within the post)
 - Interview style onboarding - done
-- Chat based platform to define next post
+- Chat based platform to define next post - done
 - ICP: SMB Private Equity / Mom & Pop Owners / Capital Raisers looking for investor leads & brand awareness growth on - LinkedIn (Should be able to be run by 1 person, however build in a way that multiple users can have access to the platform)
-- Once set up, should take <5 mins to post
+- Once set up, should take <5 mins to post - done
 - Business Model (Proposed): 
     - Freemium with usage limits
     - Tiered (Starter: $29/mo, Growth: $99/mo, Pro: $299/mo)

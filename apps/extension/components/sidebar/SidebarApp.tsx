@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { getTokens } from "../../lib/auth";
 import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from "../../lib/api";
 import { AuthGate } from "./AuthGate";
-import { GenerateForm } from "./GenerateForm";
+import { PostChat } from "./PostChat";
 import { PostPreview } from "./PostPreview";
 
 type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
@@ -167,10 +167,9 @@ export function SidebarApp() {
 
         {status === "ready" && (
           <>
-            <GenerateForm
-              onGenerate={handleGenerate}
-              isLoading={isStreaming}
-              onStop={handleStop}
+            <PostChat
+              onReadyToGenerate={handleGenerate}
+              isGenerating={isStreaming}
             />
             {error && <div className="error-msg">{error}</div>}
             <PostPreview
