@@ -22,7 +22,7 @@ export function GenerateForm({ onGenerate, isLoading, onStop }: GenerateFormProp
         id="topic-input"
         value={topic}
         onChange={(e) => setTopic(e.target.value)}
-        placeholder="e.g. I just closed a $15M multifamily deal..."
+        placeholder="What would you like to post about? e.g. I just closed a $15M multifamily deal..."
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();

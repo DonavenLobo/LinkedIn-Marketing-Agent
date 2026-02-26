@@ -163,7 +163,7 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
             disabled={isStreaming}
             placeholder={
               userMessageCount === 0
-                ? "e.g. Just closed a $15M deal in Austin, want to share the lesson about patience..."
+                ? "What would you like to post about?\n\ne.g. Just closed a $15M deal in Austin..."
                 : "Type your response..."
             }
             rows={3}

@@ -154,7 +154,7 @@ export function PostChat({ onReadyToGenerate, isGenerating }: PostChatProps) {
             disabled={isStreaming}
             placeholder={
               messages.length === 0
-                ? "e.g. Just closed a $15M deal, want to share the lesson..."
+                ? "What would you like to post about?\n\ne.g. I just closed a $15M multifamily deal..."
                 : "Type your response..."
             }
             rows={2}

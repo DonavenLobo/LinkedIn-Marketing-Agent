@@ -16,7 +16,7 @@ export function MessageBubble({ message }: { message: Message }) {
         className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isAssistant
             ? "bg-white text-[#1a1a1a] shadow-[0_1px_2px_rgba(0,0,0,0.04)] border border-[#e2e2dc]"
-            : "bg-[#1a1a1a] text-white"
+            : "bg-[#2563eb] text-white"
         }`}
       >
         {message.content.split("\n").map((line, i) => (
