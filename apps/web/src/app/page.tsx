@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import logo from "../../public/logo.png";
 
 export default function Home() {
   return (
@@ -7,8 +9,7 @@ export default function Home() {
       <header className="border-b border-[#e2e2dc] bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="LinkedIn Agent" width={24} height={24} />
+            <Image src={logo} alt="LinkedIn Agent" width={24} height={24} />
             <span className="text-sm font-semibold text-[#1a1a1a] tracking-[-0.01em]">
               LinkedIn Agent
             </span>
