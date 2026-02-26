@@ -82,8 +82,13 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
     <div className="flex flex-col h-full">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Create a Post</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1
+          className="text-[28px] text-[#1a1a1a] tracking-[-0.02em] leading-tight"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 400 }}
+        >
+          Create a Post
+        </h1>
+        <p className="mt-1 text-sm text-[#8a8a8a]">
           Tell me what you want to post about and I&apos;ll write it in your voice.
         </p>
       </div>
@@ -107,8 +112,8 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
           {isStreaming && <TypingIndicator />}
           {isGenerating && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700 font-medium shadow-sm">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              <div className="flex items-center gap-2 rounded-2xl border border-[#e2e2dc] bg-[#f7f7f5] px-4 py-3 text-sm text-[#4a4a4a] font-medium shadow-sm">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#1a1a1a] border-t-transparent" />
                 Writing your post...
               </div>
             </div>
@@ -120,13 +125,18 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
       {/* Quick Ideas chips — only before first message */}
       {showQuickIdeas && (
         <div className="mt-4">
-          <p className="text-xs font-medium text-gray-500 mb-2">QUICK IDEAS</p>
+          <p
+            className="text-[10px] font-medium text-[#8a8a8a] mb-2 tracking-[0.08em] uppercase"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            Quick Ideas
+          </p>
           <div className="flex flex-wrap gap-2">
             {QUICK_IDEAS.map((idea) => (
               <button
                 key={idea}
                 onClick={() => append({ role: "user", content: idea })}
-                className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-blue-400 hover:text-blue-700 transition"
+                className="rounded-full border border-[#e2e2dc] px-3 py-1 text-xs text-[#4a4a4a] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition"
               >
                 {idea}
               </button>
@@ -157,12 +167,12 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
                 : "Type your response..."
             }
             rows={3}
-            className="flex-1 resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 resize-none rounded-xl border border-[#e2e2dc] bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#8a8a8a] focus:border-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#1a1a1a] disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="self-end rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="self-end rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Send
           </button>
@@ -173,7 +183,7 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
       {(visibleMessages.length > 0 || isGenerating) && (
         <button
           onClick={onReset}
-          className="mt-3 text-xs text-gray-400 hover:text-gray-600 transition self-start"
+          className="mt-3 text-xs text-[#8a8a8a] underline underline-offset-2 hover:text-[#4a4a4a] transition self-start"
         >
           Start over
         </button>

@@ -4,7 +4,7 @@ import sidebarCss from "../assets/sidebar.css?inline";
 
 export default defineContentScript({
   matches: ["https://www.linkedin.com/*"],
-  cssInjectionMode: "ui",
+  cssInjectionMode: "manual",
 
   async main(ctx) {
     const ui = await createShadowRootUi(ctx, {
@@ -12,6 +12,12 @@ export default defineContentScript({
       position: "overlay",
       zIndex: 2147483647,
       onMount: (container, shadow) => {
+        // Load DM Sans font into Shadow DOM (can't use @import in inlined CSS)
+        const fontLink = document.createElement("link");
+        fontLink.rel = "stylesheet";
+        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap";
+        shadow.appendChild(fontLink);
+
         // Inject hand-written CSS into Shadow DOM
         const style = document.createElement("style");
         style.textContent = sidebarCss;
