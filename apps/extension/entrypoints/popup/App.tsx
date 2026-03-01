@@ -16,10 +16,8 @@ export default function App() {
       }
 
       try {
-        // apiFetch handles automatic token refresh on 401
         const res = await apiFetch("/api/me");
         if (res.status === 401) {
-          // Refresh also failed — session fully expired, re-login required
           setStatus("logged-out");
           return;
         }
@@ -30,7 +28,6 @@ export default function App() {
           setStatus("needs-onboarding");
         }
       } catch {
-        // API not reachable — assume ready if token exists
         setStatus("ready");
       }
     }
@@ -48,16 +45,16 @@ export default function App() {
 
   if (status === "loading") {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
-        <p className="status-hint">Loading...</p>
+      <div className="popup-center">
+        <div className="spinner" />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 className="title">LinkedIn Marketing Agent</h1>
-      <p className="subtitle">AI-powered posts in your voice</p>
+    <div className="popup-container">
+      <h1 className="popup-title">LinkedIn Agent</h1>
+      <p className="popup-subtitle">AI-powered posts in your voice</p>
 
       {status === "logged-out" && (
         <button className="btn-primary" onClick={handleGetStarted}>
@@ -66,18 +63,32 @@ export default function App() {
       )}
 
       {status === "needs-onboarding" && (
-        <div>
-          <p className="status-warning">Almost there! Complete your voice setup first.</p>
-          <button className="btn-primary" onClick={handleOnboarding}>
-            Complete Voice Setup
+        <div className="popup-stack">
+          <p className="popup-info">
+            Open LinkedIn and use the sidebar to complete your voice setup with a quick chat.
+          </p>
+          <button
+            className="btn-primary"
+            onClick={() => chrome.tabs.create({ url: "https://www.linkedin.com/feed/" })}
+          >
+            Open LinkedIn
+          </button>
+          <button className="btn-secondary" onClick={handleOnboarding}>
+            Or complete on web instead
           </button>
         </div>
       )}
 
       {status === "ready" && (
-        <div>
-          <p className="status-success">You&apos;re all set!</p>
-          <p className="status-hint">Open LinkedIn to use the sidebar</p>
+        <div className="popup-stack">
+          <p className="popup-success">You&apos;re all set!</p>
+          <p className="popup-hint">Open LinkedIn to use the sidebar</p>
+          <button
+            className="btn-secondary"
+            onClick={() => chrome.tabs.create({ url: "https://www.linkedin.com/feed/" })}
+          >
+            Open LinkedIn
+          </button>
         </div>
       )}
     </div>

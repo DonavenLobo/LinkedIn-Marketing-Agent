@@ -33,6 +33,7 @@ export function PostPreview({
   const [mode, setMode] = useState<Mode>("preview");
   const [feedbackText, setFeedbackText] = useState("");
   const [editText, setEditText] = useState("");
+  const [inserted, setInserted] = useState(false);
   const originalTextRef = useRef("");
 
   if (!content && !isStreaming) return null;
@@ -80,8 +81,37 @@ export function PostPreview({
     setMode("preview");
     setApproved(false);
     setCopied(false);
+    setInserted(false);
     setFeedbackText("");
     onNewPost();
+  };
+
+  const handleInsertToLinkedIn = () => {
+    const postBox = document.querySelector<HTMLDivElement>(
+      ".ql-editor[data-placeholder]"
+    );
+    if (postBox) {
+      postBox.innerHTML = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+      postBox.dispatchEvent(new Event("input", { bubbles: true }));
+      setInserted(true);
+    } else {
+      const btn = document.querySelector<HTMLButtonElement>(
+        "button.share-box-feed-entry__trigger"
+      );
+      if (btn) {
+        btn.click();
+        setTimeout(() => {
+          const editor = document.querySelector<HTMLDivElement>(
+            ".ql-editor[data-placeholder]"
+          );
+          if (editor) {
+            editor.innerHTML = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+            setInserted(true);
+          }
+        }, 600);
+      }
+    }
   };
 
   return (
@@ -202,6 +232,13 @@ export function PostPreview({
                   {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
+              <button
+                className="btn-insert-linkedin"
+                onClick={handleInsertToLinkedIn}
+                disabled={inserted}
+              >
+                {inserted ? "Inserted ✓" : "Insert to LinkedIn"}
+              </button>
               <button className="btn-new-post" onClick={handleNewPost}>
                 New Post
               </button>

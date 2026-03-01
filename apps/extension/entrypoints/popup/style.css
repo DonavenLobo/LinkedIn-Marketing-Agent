@@ -1,5 +1,4 @@
 :root {
-    /* Design Tokens */
     --ink: #1a1a1a;
     --ink-light: #4a4a4a;
     --ink-muted: #8a8a8a;
@@ -13,7 +12,6 @@
     --accent-light: #e8f3ff;
     --success: #057a55;
     --error: #e02424;
-
     --font-body: 'DM Sans', system-ui, sans-serif;
 }
 
@@ -25,16 +23,52 @@ body {
     min-width: 320px;
 }
 
-.title {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
+.popup-container {
+    padding: 20px 24px 24px;
 }
 
-.subtitle {
-    font-size: 14px;
+.popup-center {
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--ink);
+}
+
+.popup-subtitle {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin: 0 0 20px 0;
+}
+
+.popup-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.popup-info {
+    font-size: 13px;
     color: var(--ink-light);
-    margin: 0 0 16px 0;
+    margin: 0 0 4px 0;
+    line-height: 1.5;
+}
+
+.popup-success {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--success);
+    margin: 0;
+}
+
+.popup-hint {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin: 0;
 }
 
 .btn-primary {
@@ -60,19 +94,40 @@ body {
     box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-light);
 }
 
-.status-warning {
-    font-size: 14px;
-    color: var(--warning, #d97706);
-    margin-bottom: 12px;
-}
-
-.status-success {
-    font-size: 14px;
-    color: var(--success);
-    margin-bottom: 8px;
-}
-
-.status-hint {
-    font-size: 13px;
+.btn-secondary {
+    width: 100%;
+    padding: 8px 16px;
+    background-color: transparent;
     color: var(--ink-light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.btn-secondary:hover {
+    background-color: var(--surface-subtle);
+    color: var(--ink);
+}
+
+.btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-light);
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
