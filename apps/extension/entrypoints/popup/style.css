@@ -1,0 +1,78 @@
+:root {
+    /* Design Tokens */
+    --ink: #1a1a1a;
+    --ink-light: #4a4a4a;
+    --ink-muted: #8a8a8a;
+    --surface: #ffffff;
+    --surface-subtle: #f7f7f5;
+    --surface-muted: #eeeee9;
+    --border: #e2e2dc;
+    --border-light: #efefea;
+    --accent: #0a66c2;
+    --accent-hover: #004182;
+    --accent-light: #e8f3ff;
+    --success: #057a55;
+    --error: #e02424;
+
+    --font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--surface);
+    color: var(--ink);
+    min-width: 320px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: var(--ink-light);
+    margin: 0 0 16px 0;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: var(--accent);
+    color: var(--surface);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-light);
+}
+
+.status-warning {
+    font-size: 14px;
+    color: var(--warning, #d97706);
+    margin-bottom: 12px;
+}
+
+.status-success {
+    font-size: 14px;
+    color: var(--success);
+    margin-bottom: 8px;
+}
+
+.status-hint {
+    font-size: 13px;
+    color: var(--ink-light);
+}

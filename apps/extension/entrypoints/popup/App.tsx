@@ -49,58 +49,26 @@ export default function App() {
   if (status === "loading") {
     return (
       <div style={{ padding: 24, textAlign: "center" }}>
-        <p>Loading...</p>
+        <p className="status-hint">Loading...</p>
       </div>
     );
   }
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-        LinkedIn Marketing Agent
-      </h1>
-      <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>
-        AI-powered posts in your voice
-      </p>
+      <h1 className="title">LinkedIn Marketing Agent</h1>
+      <p className="subtitle">AI-powered posts in your voice</p>
 
       {status === "logged-out" && (
-        <button
-          onClick={handleGetStarted}
-          style={{
-            width: "100%",
-            padding: "10px 16px",
-            backgroundColor: "#0a66c2",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
+        <button className="btn-primary" onClick={handleGetStarted}>
           Get Started
         </button>
       )}
 
       {status === "needs-onboarding" && (
         <div>
-          <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }}>
-            Almost there! Complete your voice setup first.
-          </p>
-          <button
-            onClick={handleOnboarding}
-            style={{
-              width: "100%",
-              padding: "10px 16px",
-              backgroundColor: "#0a66c2",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
+          <p className="status-warning">Almost there! Complete your voice setup first.</p>
+          <button className="btn-primary" onClick={handleOnboarding}>
             Complete Voice Setup
           </button>
         </div>
@@ -108,12 +76,8 @@ export default function App() {
 
       {status === "ready" && (
         <div>
-          <p style={{ fontSize: 14, color: "#059669", marginBottom: 8 }}>
-            You&apos;re all set!
-          </p>
-          <p style={{ fontSize: 13, color: "#666" }}>
-            Open LinkedIn to use the sidebar
-          </p>
+          <p className="status-success">You&apos;re all set!</p>
+          <p className="status-hint">Open LinkedIn to use the sidebar</p>
         </div>
       )}
     </div>
