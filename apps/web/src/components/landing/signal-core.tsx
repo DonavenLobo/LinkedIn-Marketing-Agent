@@ -9,12 +9,24 @@ const ACCENT_COLOR = new THREE.Color(0x0a66c2);
 const ACCENT_GLOW = new THREE.Color(0x3b9eff);
 const BASE_COLOR = new THREE.Color(0xd0d5dd);
 
+const CONTRACT_RADIUS = 0.4;
+const EXPAND_RADIUS = 1.15;
+const CONTRACT_DURATION = 0.6;
+const EXPAND_DURATION = 0.8;
+
+type OrbPhase = "idle" | "contracting" | "holding" | "expanding";
+
+/* ------------------------------------------------------------------ */
+/*  Signal Nodes (instanced spheres)                                  */
+/* ------------------------------------------------------------------ */
+
 interface SignalNodesProps {
   generating: boolean;
   mousePos: React.MutableRefObject<{ x: number; y: number }>;
+  onExpandStart?: () => void;
 }
 
-function SignalNodes({ generating, mousePos }: SignalNodesProps) {
+function SignalNodes({ generating, mousePos, onExpandStart }: SignalNodesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { gl } = useThree();
 
@@ -31,7 +43,7 @@ function SignalNodes({ generating, mousePos }: SignalNodesProps) {
     return arr;
   }, []);
 
-  const phases = useMemo(() => {
+  const nodePhases = useMemo(() => {
     const arr = new Float32Array(NODE_COUNT);
     for (let i = 0; i < NODE_COUNT; i++) arr[i] = Math.random() * Math.PI * 2;
     return arr;
@@ -39,15 +51,20 @@ function SignalNodes({ generating, mousePos }: SignalNodesProps) {
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorArr = useMemo(() => new Float32Array(NODE_COUNT * 3), []);
-  const pulseStartRef = useRef(-1);
+
+  const orbPhase = useRef<OrbPhase>("idle");
+  const phaseStartTime = useRef(0);
   const prevGenerating = useRef(false);
+  const expandCallbackFired = useRef(false);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         gl.setAnimationLoop(null);
       } else {
-        gl.setAnimationLoop(gl.render.bind(gl, gl.domElement as unknown as THREE.Scene, {} as THREE.Camera));
+        gl.setAnimationLoop(
+          gl.render.bind(gl, gl.domElement as unknown as THREE.Scene, {} as THREE.Camera)
+        );
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -59,56 +76,118 @@ function SignalNodes({ generating, mousePos }: SignalNodesProps) {
     const t = clock.getElapsedTime();
 
     if (generating && !prevGenerating.current) {
-      pulseStartRef.current = t;
+      orbPhase.current = "contracting";
+      phaseStartTime.current = t;
+      expandCallbackFired.current = false;
+    }
+    if (!generating && prevGenerating.current) {
+      orbPhase.current = "expanding";
+      phaseStartTime.current = t;
     }
     prevGenerating.current = generating;
 
-    const pulseProgress =
-      pulseStartRef.current > 0
-        ? Math.min((t - pulseStartRef.current) / 1.5, 1)
-        : 0;
+    const elapsed = t - phaseStartTime.current;
+
+    if (orbPhase.current === "contracting" && elapsed >= CONTRACT_DURATION) {
+      orbPhase.current = "holding";
+      phaseStartTime.current = t;
+    }
+
+    if (orbPhase.current === "expanding") {
+      if (!expandCallbackFired.current && elapsed > 0.05) {
+        expandCallbackFired.current = true;
+        onExpandStart?.();
+      }
+      if (elapsed >= EXPAND_DURATION) {
+        orbPhase.current = "idle";
+        phaseStartTime.current = t;
+      }
+    }
+
+    let radiusMul = 1;
+    let phaseAccent = 0;
+
+    switch (orbPhase.current) {
+      case "contracting": {
+        const p = Math.min(elapsed / CONTRACT_DURATION, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        radiusMul = THREE.MathUtils.lerp(1, CONTRACT_RADIUS, eased);
+        phaseAccent = eased * 0.8;
+        break;
+      }
+      case "holding": {
+        radiusMul = CONTRACT_RADIUS + Math.sin(elapsed * 12) * 0.03;
+        phaseAccent = 0.9;
+        break;
+      }
+      case "expanding": {
+        const p = Math.min(elapsed / EXPAND_DURATION, 1);
+        const eased = 1 - Math.pow(1 - p, 2);
+        if (p < 0.4) {
+          radiusMul = THREE.MathUtils.lerp(CONTRACT_RADIUS, EXPAND_RADIUS, p / 0.4);
+        } else {
+          const settleEased = 1 - Math.pow(1 - (p - 0.4) / 0.6, 3);
+          radiusMul = THREE.MathUtils.lerp(EXPAND_RADIUS, 1, settleEased);
+        }
+        phaseAccent = Math.max(0, 1 - eased) * 0.7;
+        break;
+      }
+      default:
+        radiusMul = 1;
+        phaseAccent = 0;
+    }
 
     const tiltX = mousePos.current.y * 0.08;
     const tiltY = mousePos.current.x * 0.08;
+    const globalRotY = t * 0.05;
 
     for (let i = 0; i < NODE_COUNT; i++) {
       const ix = i * 3;
       const px = positions[ix];
       const py = positions[ix + 1];
       const pz = positions[ix + 2];
-      const phase = phases[i];
+      const phase = nodePhases[i];
 
-      const breathe = 1 + Math.sin(t * 0.6 + phase) * 0.04;
-      const dist = Math.sqrt(px * px + py * py + pz * pz);
-      const normDist = dist / 2.2;
+      const breathe = 1 + Math.sin(t * 0.6 + phase) * 0.06;
+      const rm = radiusMul * breathe;
 
-      const pulseWave =
-        pulseProgress > 0
-          ? Math.max(0, 1 - Math.abs(normDist - pulseProgress) * 4) *
-            (1 - pulseProgress * 0.5)
-          : 0;
+      const cosR = Math.cos(globalRotY);
+      const sinR = Math.sin(globalRotY);
+      const rx = px * cosR + pz * sinR;
+      const rz = -px * sinR + pz * cosR;
 
-      const scale = (0.012 + pulseWave * 0.025) * breathe;
+      const nodeScale =
+        orbPhase.current === "holding"
+          ? 0.018 + Math.sin(t * 8 + phase) * 0.006
+          : orbPhase.current === "contracting" || orbPhase.current === "expanding"
+            ? 0.015
+            : 0.012 + Math.sin(t * 0.8 + phase) * 0.003;
 
-      dummy.position.set(
-        px * breathe + tiltX * 0.3,
-        py * breathe + tiltY * 0.3,
-        pz * breathe
-      );
-      dummy.scale.setScalar(scale);
-      dummy.rotation.set(t * 0.1 + tiltX, t * 0.15 + tiltY, 0);
+      dummy.position.set(rx * rm + tiltX * 0.3, py * rm + tiltY * 0.3, rz * rm);
+      dummy.scale.setScalar(nodeScale);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
 
-      const accentMix = pulseWave * 0.9 + Math.sin(t * 0.4 + phase) * 0.1;
-      const color = new THREE.Color().lerpColors(
-        BASE_COLOR,
-        accentMix > 0.3 ? ACCENT_COLOR : BASE_COLOR,
-        accentMix
-      );
+      const dist = Math.sqrt(px * px + py * py + pz * pz);
+      const normDist = dist / 2.2;
 
-      if (pulseWave > 0.5) {
-        color.lerp(ACCENT_GLOW, (pulseWave - 0.5) * 2);
+      let accentMix = phaseAccent;
+
+      if (orbPhase.current === "expanding") {
+        const p = Math.min(elapsed / EXPAND_DURATION, 1);
+        const waveFront = p * 1.5;
+        const wave = Math.max(0, 1 - Math.abs(normDist - waveFront) * 3);
+        accentMix = Math.max(accentMix, wave * 0.9);
+      }
+
+      if (orbPhase.current === "idle") {
+        accentMix = Math.max(0, Math.sin(t * 0.4 + phase) * 0.15);
+      }
+
+      const color = new THREE.Color().lerpColors(BASE_COLOR, ACCENT_COLOR, Math.min(accentMix, 1));
+
+      if (accentMix > 0.6) {
+        color.lerp(ACCENT_GLOW, (accentMix - 0.6) * 2.5);
       }
 
       colorArr[ix] = color.r;
@@ -128,15 +207,16 @@ function SignalNodes({ generating, mousePos }: SignalNodesProps) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, NODE_COUNT]}>
       <sphereGeometry args={[1, 6, 6]}>
-        <instancedBufferAttribute
-          attach="attributes-color"
-          args={[colorArr, 3]}
-        />
+        <instancedBufferAttribute attach="attributes-color" args={[colorArr, 3]} />
       </sphereGeometry>
       <meshBasicMaterial vertexColors toneMapped={false} />
     </instancedMesh>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Camera rig                                                        */
+/* ------------------------------------------------------------------ */
 
 function CameraRig({ mousePos }: { mousePos: React.MutableRefObject<{ x: number; y: number }> }) {
   useFrame(({ camera }) => {
@@ -147,11 +227,16 @@ function CameraRig({ mousePos }: { mousePos: React.MutableRefObject<{ x: number;
   return null;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Public SignalCore wrapper                                         */
+/* ------------------------------------------------------------------ */
+
 interface SignalCoreProps {
   generating: boolean;
+  onExpandStart?: () => void;
 }
 
-export function SignalCore({ generating }: SignalCoreProps) {
+export function SignalCore({ generating, onExpandStart }: SignalCoreProps) {
   const mousePos = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -180,13 +265,7 @@ export function SignalCore({ generating }: SignalCoreProps) {
         className="absolute inset-0 flex items-center justify-center"
         aria-hidden="true"
       >
-        <svg
-          width="320"
-          height="320"
-          viewBox="0 0 320 320"
-          fill="none"
-          className="opacity-30"
-        >
+        <svg width="320" height="320" viewBox="0 0 320 320" fill="none" className="opacity-30">
           <circle cx="160" cy="160" r="120" stroke="var(--accent)" strokeWidth="0.5" opacity="0.4" />
           <circle cx="160" cy="160" r="80" stroke="var(--accent)" strokeWidth="0.5" opacity="0.6" />
           <circle cx="160" cy="160" r="40" stroke="var(--accent)" strokeWidth="1" opacity="0.8" />
@@ -225,7 +304,7 @@ export function SignalCore({ generating }: SignalCoreProps) {
         style={{ pointerEvents: "none" }}
         frameloop="always"
       >
-        <SignalNodes generating={generating} mousePos={mousePos} />
+        <SignalNodes generating={generating} mousePos={mousePos} onExpandStart={onExpandStart} />
         <CameraRig mousePos={mousePos} />
       </Canvas>
     </div>

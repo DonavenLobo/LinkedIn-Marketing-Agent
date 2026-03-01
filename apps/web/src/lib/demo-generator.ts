@@ -6,6 +6,7 @@ interface GeneratedPost {
   body: string;
   likes: number;
   comments: number;
+  reposts: number;
 }
 
 function hashString(str: string): number {
@@ -91,5 +92,6 @@ export function generateDemoPost(topic: string, tone: Tone): GeneratedPost {
     body,
     likes: 40 + (seed % 180),
     comments: 8 + (seed % 35),
+    reposts: 3 + (seed % 18),
   };
 }
