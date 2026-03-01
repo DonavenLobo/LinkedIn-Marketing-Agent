@@ -84,11 +84,14 @@ export default function App() {
 
       {status === "needs-onboarding" && (
         <div>
-          <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }}>
-            Almost there! Complete your voice setup first.
+          <p style={{ fontSize: 14, color: "#2563eb", marginBottom: 8, fontWeight: 500 }}>
+            Almost there!
+          </p>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
+            Open LinkedIn and use the sidebar to complete your voice setup with a quick chat.
           </p>
           <button
-            onClick={handleOnboarding}
+            onClick={() => chrome.tabs.create({ url: "https://www.linkedin.com/feed/" })}
             style={{
               width: "100%",
               padding: "10px 16px",
@@ -99,9 +102,25 @@ export default function App() {
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
+              marginBottom: 8,
             }}
           >
-            Complete Voice Setup
+            Open LinkedIn
+          </button>
+          <button
+            onClick={handleOnboarding}
+            style={{
+              width: "100%",
+              padding: "8px 16px",
+              backgroundColor: "transparent",
+              color: "#666",
+              border: "1px solid #e2e2dc",
+              borderRadius: 8,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            Or complete on web instead
           </button>
         </div>
       )}

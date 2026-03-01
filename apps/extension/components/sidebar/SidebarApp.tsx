@@ -4,6 +4,7 @@ import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from 
 import { AuthGate } from "./AuthGate";
 import { PostChat } from "./PostChat";
 import { PostPreview } from "./PostPreview";
+import { VoiceOnboarding } from "./VoiceOnboarding";
 
 type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
 
@@ -146,23 +147,14 @@ export function SidebarApp() {
         {status === "logged-out" && <AuthGate />}
 
         {status === "needs-onboarding" && (
-          <div className="auth-gate">
-            <h2>Almost there!</h2>
-            <p>Complete your voice setup so I can write posts that sound like you.</p>
-            <button
-              className="btn-primary"
-              onClick={() => window.open("http://localhost:3000/onboarding", "_blank")}
-            >
-              Complete Voice Setup
-            </button>
-            <button
-              className="btn-secondary"
-              style={{ marginTop: 8 }}
-              onClick={checkStatus}
-            >
-              I&apos;m done — refresh
-            </button>
-          </div>
+          <VoiceOnboarding
+            onComplete={() => {
+              checkStatus();
+            }}
+            onFallbackToWeb={() => {
+              window.open("http://localhost:3000/onboarding", "_blank");
+            }}
+          />
         )}
 
         {status === "ready" && (

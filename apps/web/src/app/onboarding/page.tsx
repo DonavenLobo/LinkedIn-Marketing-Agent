@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { OnboardingChat } from "@/components/onboarding/onboarding-chat";
+import { OnboardingWrapper } from "@/components/onboarding/onboarding-wrapper";
 
 export default async function OnboardingPage() {
   const supabase = await createSupabaseServer();
@@ -22,5 +22,5 @@ export default async function OnboardingPage() {
     redirect("/create");
   }
 
-  return <OnboardingChat userId={user.id} />;
+  return <OnboardingWrapper userId={user.id} />;
 }

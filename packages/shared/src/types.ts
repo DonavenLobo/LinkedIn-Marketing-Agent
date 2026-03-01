@@ -94,6 +94,7 @@ export interface AnalyzeRequest {
   transcript: TranscriptMessage[];
   toolData: ProfileToolData;
   userId: string;
+  writingSamples?: string[];
 }
 
 // ---- Database type for Supabase client ----
