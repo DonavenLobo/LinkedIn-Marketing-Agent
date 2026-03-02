@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getTokens } from "../../lib/auth";
 import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from "../../lib/api";
+import { API_URL } from "../../lib/config";
 import { AuthGate } from "./AuthGate";
 import { PostChat } from "./PostChat";
 import { PostPreview } from "./PostPreview";
@@ -151,7 +152,7 @@ export function SidebarApp() {
             <p>Complete your voice setup so I can write posts that sound like you.</p>
             <button
               className="btn-primary"
-              onClick={() => window.open("http://localhost:3000/onboarding", "_blank")}
+              onClick={() => window.open(`${API_URL}/onboarding`, "_blank")}
             >
               Complete Voice Setup
             </button>

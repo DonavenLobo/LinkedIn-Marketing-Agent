@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { getTokens } from "../../lib/auth";
+import { API_URL } from "../../lib/config";
 
 type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
 
@@ -39,11 +40,11 @@ export default function App() {
   }, []);
 
   const handleGetStarted = () => {
-    chrome.tabs.create({ url: "http://localhost:3000/auth/login?from=extension" });
+    chrome.tabs.create({ url: `${API_URL}/auth/login?from=extension` });
   };
 
   const handleOnboarding = () => {
-    chrome.tabs.create({ url: "http://localhost:3000/onboarding" });
+    chrome.tabs.create({ url: `${API_URL}/onboarding` });
   };
 
   if (status === "loading") {

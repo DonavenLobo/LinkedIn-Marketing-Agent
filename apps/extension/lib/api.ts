@@ -1,6 +1,5 @@
 import { getTokens, refreshTokens } from "./auth";
-
-const API_URL = "http://localhost:3000";
+import { API_URL } from "./config";
 
 async function makeRequest(
   path: string,

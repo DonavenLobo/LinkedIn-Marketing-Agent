@@ -7,7 +7,7 @@ export default defineConfig({
     description: "AI-powered LinkedIn content in your voice",
     permissions: ["tabs", "storage", "activeTab"],
     host_permissions: [
-      "http://localhost:3000/*",
+      "https://linked-in-marketing-agent.vercel.app/*",
       "https://www.linkedin.com/*"
     ],
   },

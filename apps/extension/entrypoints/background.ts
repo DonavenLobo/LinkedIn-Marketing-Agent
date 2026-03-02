@@ -1,3 +1,5 @@
+import { API_URL } from "../lib/config";
+
 export default defineBackground(() => {
   console.log("LinkedIn Marketing Agent background script loaded");
 
@@ -17,7 +19,7 @@ export default defineBackground(() => {
           console.log("Auth tokens captured and stored");
 
           // Check if user needs onboarding
-          fetch("http://localhost:3000/api/me", {
+          fetch(`${API_URL}/api/me`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           })
             .then((res) => res.json())
@@ -25,7 +27,7 @@ export default defineBackground(() => {
               if (!data.user?.onboarding_complete) {
                 // Redirect the tab to onboarding instead of closing it
                 chrome.tabs.update(tabId, {
-                  url: "http://localhost:3000/onboarding",
+                  url: `${API_URL}/onboarding`,
                 });
               } else {
                 chrome.tabs.remove(tabId);
