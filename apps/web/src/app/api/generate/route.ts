@@ -55,6 +55,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // Fetch brand guidelines from user profile
+  const { data: userProfile } = await supabase
+    .from("user_profiles")
+    .select("brand_guidelines")
+    .eq("id", user.id)
+    .single();
+
   // Fetch recent interactions for progressive learning context
   const { data: interactions } = await supabase
     .from("post_interactions")
@@ -64,7 +71,7 @@ export async function POST(request: Request) {
     .limit(8);
 
   const learningContext = buildLearningContext((interactions as PostInteraction[]) || []);
-  const systemPrompt = buildSystemPrompt(voiceProfile);
+  const systemPrompt = buildSystemPrompt(voiceProfile, userProfile?.brand_guidelines);
   const userPrompt = buildUserPrompt(topic, voiceProfile.sample_posts || [], learningContext);
 
   // StreamData lets us send the saved post's ID back to the client

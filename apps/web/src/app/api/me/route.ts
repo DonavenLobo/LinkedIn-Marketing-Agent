@@ -47,6 +47,7 @@ export async function GET(request: Request) {
         display_name: profile?.display_name,
         avatar_url: profile?.avatar_url,
         onboarding_complete: onboardingComplete,
+        has_brand_guidelines: !!profile?.brand_guidelines,
       },
       voice_profile: voiceProfile ?? null,
     },

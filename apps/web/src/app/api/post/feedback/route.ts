@@ -71,6 +71,13 @@ export async function POST(request: Request) {
     });
   }
 
+  // Fetch brand guidelines from user profile
+  const { data: userProfile } = await supabase
+    .from("user_profiles")
+    .select("brand_guidelines")
+    .eq("id", user.id)
+    .single();
+
   // Count previous feedback rounds for this post
   const { count: revisionCount } = await supabase
     .from("post_interactions")
@@ -87,7 +94,7 @@ export async function POST(request: Request) {
     .limit(8);
 
   const learningContext = buildLearningContext((interactions as PostInteraction[]) || []);
-  const systemPrompt = buildSystemPrompt(voiceProfile);
+  const systemPrompt = buildSystemPrompt(voiceProfile, userProfile?.brand_guidelines);
   const userPrompt = learningContext
     ? `${learningContext}\n${buildFeedbackPrompt(current_text, feedback, topic)}`
     : buildFeedbackPrompt(current_text, feedback, topic);
