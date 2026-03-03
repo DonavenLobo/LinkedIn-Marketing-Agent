@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.0",
     "@linkedin-agent/shared": "workspace:*",
+    "@elevenlabs/client": "^0.15.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@supabase/ssr": "^0.5.2",

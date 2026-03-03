@@ -10,6 +10,12 @@ import type { ProfileToolData, TranscriptMessage } from "@linkedin-agent/shared"
 
 interface OnboardingChatProps {
   userId: string;
+  /** Where to redirect after profile is ready. Default: /create */
+  redirectTo?: string;
+  /** When true, use h-full instead of h-screen for embedding in a container */
+  embedded?: boolean;
+  /** Whether this is a redo flow (used for downstream routing/copy) */
+  isRedo?: boolean;
 }
 
 function getProgress(userMessageCount: number, isBuilding: boolean): { label: string; value: number } {
@@ -73,7 +79,12 @@ function ProfileReadyCard({
   );
 }
 
-export function OnboardingChat({ userId }: OnboardingChatProps) {
+export function OnboardingChat({
+  userId,
+  redirectTo = "/create",
+  embedded,
+  isRedo = false,
+}: OnboardingChatProps) {
   const router = useRouter();
   const [isBuilding, setIsBuilding] = useState(false);
   const [profileResult, setProfileResult] = useState<ProfileResult | null>(null);
@@ -185,7 +196,9 @@ export function OnboardingChat({ userId }: OnboardingChatProps) {
   );
 
   return (
-    <div className="mx-auto flex h-screen max-w-2xl flex-col">
+    <div
+      className={`mx-auto flex max-w-2xl flex-col ${embedded ? "h-full min-h-0" : "h-screen"}`}
+    >
       {/* Header */}
       <div className="border-b border-border bg-surface/80 backdrop-blur-sm px-6 py-4 space-y-2">
         <div className="flex items-center justify-between">
@@ -263,7 +276,12 @@ export function OnboardingChat({ userId }: OnboardingChatProps) {
         {profileResult && (
           <ProfileReadyCard
             result={profileResult}
-            onContinue={() => router.push("/create")}
+            onContinue={() => {
+              const params = new URLSearchParams();
+              params.set("redirectTo", redirectTo);
+              if (isRedo) params.set("redo", "1");
+              router.push(`/onboarding/posts?${params.toString()}`);
+            }}
           />
         )}
 

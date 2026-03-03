@@ -15,10 +15,11 @@ const QUICK_IDEAS = [
 interface PostChatProps {
   onReadyToGenerate: (enrichedTopic: string) => void;
   onReset: () => void;
+  onStop?: () => void;
   isGenerating: boolean;
 }
 
-export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatProps) {
+export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: PostChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasTriggeredRef = useRef(false);
 
@@ -103,11 +104,20 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
           })}
           {isStreaming && <TypingIndicator />}
           {isGenerating && (
-            <div className="flex justify-start">
+            <div className="flex justify-start items-center gap-3">
               <div className="flex items-center gap-2 rounded-md border border-border bg-surface-subtle px-4 py-3 text-sm text-ink-light font-medium shadow-sm">
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink border-t-transparent" />
                 Writing your post...
               </div>
+              {onStop && (
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="text-sm text-ink-muted hover:text-ink underline underline-offset-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  Stop generating
+                </button>
+              )}
             </div>
           )}
           <div ref={messagesEndRef} />

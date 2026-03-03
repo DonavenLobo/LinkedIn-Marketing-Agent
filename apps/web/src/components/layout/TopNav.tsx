@@ -67,34 +67,47 @@ export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
                 <div className="flex items-center gap-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                                <Avatar className="h-10 w-10 border border-border">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="relative size-10 rounded-full p-0 shrink-0"
+                            >
+                                <Avatar className="size-10 shrink-0 overflow-hidden rounded-full border border-border">
                                     <AvatarImage src={avatarUrl} alt={name || userEmail || "User avatar"} />
                                     <AvatarFallback>{initials}</AvatarFallback>
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end" forceMount>
-                            <DropdownMenuLabel className="font-normal">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none text-ink">
+                        <DropdownMenuContent
+                            className="w-64 rounded-xl border border-border bg-surface p-3 shadow-xl"
+                            align="end"
+                            forceMount
+                            sideOffset={8}
+                        >
+                            <DropdownMenuLabel className="font-normal px-2 py-2">
+                                <div className="flex flex-col gap-0.5">
+                                    <p className="text-sm font-semibold leading-tight text-ink">
                                         {name || "Account"}
                                     </p>
-                                    <p className="text-xs leading-none text-ink-muted">
+                                    <p className="text-xs leading-tight text-ink-muted break-all">
                                         {userEmail}
                                     </p>
                                 </div>
                             </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <Link href="/create">New Post</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-destructive focus:bg-error-light focus:text-destructive cursor-pointer"
-                                onClick={handleSignOut}
-                            >
-                                Sign out
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="my-2" />
+                            <div className="space-y-0.5">
+                                <DropdownMenuItem asChild>
+                                    <Link href="/account" className="flex cursor-pointer rounded-lg px-3 py-2.5">
+                                        Account
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="text-destructive focus:bg-error-light focus:text-destructive cursor-pointer rounded-lg px-3 py-2.5"
+                                    onClick={handleSignOut}
+                                >
+                                    Log out
+                                </DropdownMenuItem>
+                            </div>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

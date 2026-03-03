@@ -7,7 +7,6 @@ import logo from "../../public/logo.png";
 import { HeroSection } from "@/components/landing/hero-section";
 import { VoiceprintHologram } from "@/components/landing/voiceprint-hologram";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { SecuritySection } from "@/components/landing/security-section";
 import type { Tone } from "@/lib/demo-generator";
 
 export default function Home() {
@@ -31,12 +30,6 @@ export default function Home() {
               className="text-sm text-ink-light transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
               How it works
-            </a>
-            <a
-              href="#security"
-              className="text-sm text-ink-light transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-            >
-              Security
             </a>
             <Link
               href="/auth/login"
@@ -75,10 +68,7 @@ export default function Home() {
       {/* C) How it works */}
       <HowItWorks />
 
-      {/* D) Security */}
-      <SecuritySection />
-
-      {/* E) Final CTA band */}
+      {/* D) Final CTA band */}
       <section className="border-t border-border-light bg-surface py-20 sm:py-24">
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
           <h2 className="font-display text-3xl text-ink tracking-tight sm:text-4xl">

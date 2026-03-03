@@ -156,6 +156,12 @@ Respond ONLY with valid JSON matching this exact schema:
     const writingSamples = extractWritingSamples(transcript);
     const extractedName = extractName(transcript);
 
+    // Deactivate any existing profiles so we have at most one active
+    await supabase
+      .from("voice_profiles")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
+
     const { data: voiceProfile, error: insertError } = await supabase
       .from("voice_profiles")
       .insert({
