@@ -11,6 +11,7 @@ create table public.user_profiles (
   linkedin_headline text,
   avatar_url text,
   onboarding_complete boolean default false,
+  brand_guidelines text default null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

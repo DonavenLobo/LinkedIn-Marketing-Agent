@@ -25,6 +25,12 @@ export default function DashboardLayout({
             >
               Create Post
             </Link>
+            <Link
+              href="/settings"
+              className="text-sm font-medium text-[#1a1a1a] hover:text-[#4a4a4a] transition"
+            >
+              Settings
+            </Link>
           </nav>
         </div>
       </header>

@@ -49,7 +49,7 @@ ANTI-PATTERNS (never do these)
  *
  * Future: accept a "case folder" of curated tone/voice examples.
  */
-export function buildSystemPrompt(voiceProfile: VoiceProfile): string {
+export function buildSystemPrompt(voiceProfile: VoiceProfile, brandGuidelines?: string | null): string {
   const parts: string[] = [];
 
   // Use the AI-generated system prompt from onboarding
@@ -90,6 +90,13 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile): string {
   if (voiceProfile.signature_phrases?.length > 0) {
     parts.push(
       `\nNaturally incorporate phrases like: ${voiceProfile.signature_phrases.join(", ")}`
+    );
+  }
+
+  // Brand & company guidelines (user-defined guardrails)
+  if (brandGuidelines?.trim()) {
+    parts.push(
+      `\nBRAND & COMPANY GUIDELINES (follow these rules while maintaining the user's authentic voice):\n${brandGuidelines.trim()}`
     );
   }
 

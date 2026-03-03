@@ -6,6 +6,7 @@ export interface UserProfile {
   linkedin_headline: string | null;
   avatar_url: string | null;
   onboarding_complete: boolean;
+  brand_guidelines: string | null;
   created_at: string;
   updated_at: string;
 }
