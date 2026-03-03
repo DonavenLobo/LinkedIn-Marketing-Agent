@@ -279,6 +279,29 @@ export function PostPreview({
               ))}
             </div>
           )}
+
+          {/* Media engagement tip */}
+          <div className="media-tip">
+            <span className="media-tip-label">MEDIA TIP</span>
+            <div className="media-tip-list">
+              <div className="media-tip-item">
+                <span className="media-dot media-dot--best" />
+                <span><strong>Video</strong> — highest engagement</span>
+              </div>
+              <div className="media-tip-item">
+                <span className="media-dot media-dot--great" />
+                <span><strong>Carousel</strong> — strong reach</span>
+              </div>
+              <div className="media-tip-item">
+                <span className="media-dot media-dot--good" />
+                <span><strong>Single image</strong> — solid boost</span>
+              </div>
+              <div className="media-tip-item">
+                <span className="media-dot media-dot--low" />
+                <span><strong>Text only</strong> — least reach</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

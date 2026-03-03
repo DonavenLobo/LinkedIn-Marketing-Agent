@@ -52,7 +52,7 @@ export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: P
         if (
           part.type === "tool-invocation" &&
           part.toolInvocation.toolName === "ready_to_generate" &&
-          part.toolInvocation.state === "call"
+          (part.toolInvocation.state === "call" || part.toolInvocation.state === "result")
         ) {
           handleGenerate(
             (part.toolInvocation.args as { enrichedTopic: string }).enrichedTopic

@@ -19,6 +19,7 @@ export function SidebarApp() {
   const [isFeedbackStreaming, setIsFeedbackStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
   const abortRef = useRef(false);
 
   useEffect(() => {
@@ -178,6 +179,7 @@ export function SidebarApp() {
         {status === "ready" && (
           <>
             <PostChat
+              key={chatKey}
               onReadyToGenerate={handleGenerate}
               isGenerating={isStreaming}
             />
@@ -194,6 +196,9 @@ export function SidebarApp() {
               onNewPost={() => {
                 setContent("");
                 setPostId(null);
+                setTopic("");
+                setError(null);
+                setChatKey((k) => k + 1);
                 document.querySelector(".sidebar-content")?.scrollTo(0, 0);
               }}
             />
