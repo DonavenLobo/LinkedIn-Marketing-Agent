@@ -10,5 +10,14 @@ export default defineConfig({
       "https://linked-in-marketing-agent.vercel.app/*",
       "https://www.linkedin.com/*"
     ],
+    web_accessible_resources: [
+      {
+        resources: [
+          "elevenlabs-worklets/rawAudioProcessor.js",
+          "elevenlabs-worklets/audioConcatProcessor.js"
+        ],
+        matches: ["https://www.linkedin.com/*"],
+      },
+    ],
   },
 });
