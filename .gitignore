@@ -25,3 +25,11 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+
+# zip files
+*.zip
+
+# agent files
+*.claude
+claude_docs/

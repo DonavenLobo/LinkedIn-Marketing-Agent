@@ -89,6 +89,10 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
   }, []);
 
   const conversation = useConversation({
+    workletPaths: {
+      rawAudioProcessor: chrome.runtime.getURL("elevenlabs-worklets/rawAudioProcessor.js"),
+      audioConcatProcessor: chrome.runtime.getURL("elevenlabs-worklets/audioConcatProcessor.js"),
+    },
     onConnect: () => {
       setPhase("conversation");
       setError(null);
