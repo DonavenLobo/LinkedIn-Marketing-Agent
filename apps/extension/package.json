@@ -8,15 +8,17 @@
     "zip": "wxt zip"
   },
   "dependencies": {
+    "@elevenlabs/react": "^0.14.1",
+    "@linkedin-agent/shared": "workspace:*",
+    "framer-motion": "^12.34.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@linkedin-agent/shared": "workspace:*"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "wxt": "^0.19.0",
-    "@wxt-dev/module-react": "^1.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0"
+    "@wxt-dev/module-react": "^1.1.0",
+    "typescript": "^5.7.0",
+    "wxt": "^0.19.0"
   }
 }

@@ -17,10 +17,8 @@ export default function App() {
       }
 
       try {
-        // apiFetch handles automatic token refresh on 401
         const res = await apiFetch("/api/me");
         if (res.status === 401) {
-          // Refresh also failed — session fully expired, re-login required
           setStatus("logged-out");
           return;
         }
@@ -31,7 +29,6 @@ export default function App() {
           setStatus("needs-onboarding");
         }
       } catch {
-        // API not reachable — assume ready if token exists
         setStatus("ready");
       }
     }
@@ -39,8 +36,8 @@ export default function App() {
     checkStatus();
   }, []);
 
-  const handleGetStarted = () => {
-    chrome.tabs.create({ url: `${API_URL}/auth/login?from=extension` });
+  const handleGetStarted = (provider: "linkedin_oidc" | "google") => {
+    chrome.tabs.create({ url: `${API_URL}/auth/login?from=extension&provider=${provider}` });
   };
 
   const handleOnboarding = () => {
@@ -49,72 +46,55 @@ export default function App() {
 
   if (status === "loading") {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
-        <p>Loading...</p>
+      <div className="popup-center">
+        <div className="spinner" />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-        LinkedIn Marketing Agent
-      </h1>
-      <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>
-        AI-powered posts in your voice
-      </p>
+    <div className="popup-container">
+      <h1 className="popup-title">LinkedIn Agent</h1>
+      <p className="popup-subtitle">AI-powered posts in your voice</p>
 
       {status === "logged-out" && (
-        <button
-          onClick={handleGetStarted}
-          style={{
-            width: "100%",
-            padding: "10px 16px",
-            backgroundColor: "#0a66c2",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Get Started
-        </button>
+        <div className="popup-stack">
+          <button className="btn-primary" onClick={() => handleGetStarted("linkedin_oidc")}>
+            Sign in with LinkedIn
+          </button>
+          <button className="btn-secondary" onClick={() => handleGetStarted("google")}>
+            Sign in with Google
+          </button>
+        </div>
       )}
 
       {status === "needs-onboarding" && (
-        <div>
-          <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }}>
-            Almost there! Complete your voice setup first.
+        <div className="popup-stack">
+          <p className="popup-info">
+            Open LinkedIn and use the sidebar to complete your voice setup with a quick chat.
           </p>
           <button
-            onClick={handleOnboarding}
-            style={{
-              width: "100%",
-              padding: "10px 16px",
-              backgroundColor: "#0a66c2",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className="btn-primary"
+            onClick={() => chrome.tabs.create({ url: "https://www.linkedin.com/feed/" })}
           >
-            Complete Voice Setup
+            Open LinkedIn
+          </button>
+          <button className="btn-secondary" onClick={handleOnboarding}>
+            Or complete on web instead
           </button>
         </div>
       )}
 
       {status === "ready" && (
-        <div>
-          <p style={{ fontSize: 14, color: "#059669", marginBottom: 8 }}>
-            You&apos;re all set!
-          </p>
-          <p style={{ fontSize: 13, color: "#666" }}>
-            Open LinkedIn to use the sidebar
-          </p>
+        <div className="popup-stack">
+          <p className="popup-success">You&apos;re all set!</p>
+          <p className="popup-hint">Open LinkedIn to use the sidebar</p>
+          <button
+            className="btn-secondary"
+            onClick={() => chrome.tabs.create({ url: "https://www.linkedin.com/feed/" })}
+          >
+            Open LinkedIn
+          </button>
         </div>
       )}
     </div>

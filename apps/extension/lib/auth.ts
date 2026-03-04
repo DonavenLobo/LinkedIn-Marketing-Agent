@@ -57,6 +57,7 @@ export async function refreshTokens(): Promise<string | null> {
   }
 }
 
-export function getLoginUrl(): string {
-  return `${API_URL}/auth/login?from=extension`;
+export function getLoginUrl(provider?: "linkedin_oidc" | "google"): string {
+  const base = `${API_URL}/auth/login?from=extension`;
+  return provider ? `${base}&provider=${provider}` : base;
 }

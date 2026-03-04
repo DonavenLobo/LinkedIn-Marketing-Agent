@@ -52,6 +52,6 @@ export async function getAuthUser(request: Request): Promise<AuthResult> {
 /** Standard CORS headers for API routes accessed by the extension */
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };

@@ -1,41 +1,37 @@
-import Image from "next/image";
-import Link from "next/link";
-import logo from "../../../public/logo.png";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen bg-[#f7f7f5]">
-      {/* Top nav */}
-      <header className="border-b border-[#e2e2dc] bg-white">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <Link href="/create" className="flex items-center gap-2">
-            <Image src={logo} alt="LinkedIn Agent" width={22} height={22} />
-            <span className="text-sm font-semibold text-[#1a1a1a] tracking-[-0.01em]">
-              LinkedIn Agent
-            </span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/create"
-              className="text-sm font-medium text-[#1a1a1a] hover:text-[#4a4a4a] transition"
-            >
-              Create Post
-            </Link>
-            <Link
-              href="/settings"
-              className="text-sm font-medium text-[#1a1a1a] hover:text-[#4a4a4a] transition"
-            >
-              Settings
-            </Link>
-          </nav>
-        </div>
-      </header>
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
-    </div>
+  let displayName: string | undefined;
+  let avatarUrl: string | undefined;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .single();
+
+    displayName = profile?.display_name ?? user.user_metadata?.full_name ?? undefined;
+    avatarUrl = profile?.avatar_url ?? user.user_metadata?.avatar_url ?? undefined;
+  }
+
+  return (
+    <DashboardShell
+      userEmail={user?.email}
+      userName={displayName}
+      avatarUrl={avatarUrl}
+    >
+      {children}
+    </DashboardShell>
   );
 }

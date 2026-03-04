@@ -12,10 +12,10 @@ export default defineContentScript({
       position: "overlay",
       zIndex: 2147483647,
       onMount: (container, shadow) => {
-        // Load DM Sans font into Shadow DOM (can't use @import in inlined CSS)
+        // Load DM Sans + DM Mono fonts into Shadow DOM (can't use @import in inlined CSS)
         const fontLink = document.createElement("link");
         fontLink.rel = "stylesheet";
-        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap";
+        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap";
         shadow.appendChild(fontLink);
 
         // Inject hand-written CSS into Shadow DOM
@@ -43,21 +43,54 @@ export default defineContentScript({
 
 function SidebarRoot() {
   const [collapsed, setCollapsed] = useState(true);
+  const [showToggleTour, setShowToggleTour] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Show toggle tour on first load
+  useEffect(() => {
+    hasToggleTourBeenSeen().then((seen) => {
+      if (!seen) {
+        setTimeout(() => setShowToggleTour(true), 1000);
+      }
+    });
+  }, []);
+
+  const handleToggleClick = () => {
+    if (showToggleTour) {
+      setShowToggleTour(false);
+      markToggleTourSeen();
+    }
+    setCollapsed(!collapsed);
+  };
 
   return (
     <>
       <button
         className={`sidebar-toggle ${collapsed ? "collapsed" : ""}`}
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={handleToggleClick}
       >
         {collapsed ? "◀" : "▶"}
       </button>
-      <div className={`sidebar-container ${collapsed ? "collapsed" : ""}`}>
-        <SidebarApp />
+
+      {showToggleTour && collapsed && (
+        <>
+          <div className="toggle-tour-pulse" />
+          <div className="toggle-tour-tooltip" onClick={() => { setShowToggleTour(false); markToggleTourSeen(); }}>
+            <div className="toggle-tour-bubble">
+              <p>Click to open your AI writing assistant</p>
+            </div>
+            <div className="toggle-tour-arrow" />
+          </div>
+        </>
+      )}
+
+      <div ref={containerRef} className={`sidebar-container ${collapsed ? "collapsed" : ""}`}>
+        <SidebarApp containerRef={containerRef} />
       </div>
     </>
   );
 }
 
-// Need this import for the useState in SidebarRoot
-import { useState } from "react";
+// Need these imports for the SidebarRoot component
+import { useState, useRef, useEffect } from "react";
+import { hasToggleTourBeenSeen, markToggleTourSeen } from "../lib/tour";

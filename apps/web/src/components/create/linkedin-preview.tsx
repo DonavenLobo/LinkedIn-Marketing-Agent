@@ -1,5 +1,7 @@
 "use client";
 
+import { Skeleton } from "@linkedin-agent/shared";
+
 interface LinkedInPreviewProps {
   content: string;
   isLoading: boolean;
@@ -16,53 +18,88 @@ export function LinkedInPreview({
 }: LinkedInPreviewProps) {
   if (!content && !isLoading) {
     return (
-      <div className="rounded-[10px] border-2 border-dashed border-[#e2e2dc] p-8 text-center">
-        <p className="text-sm text-[#8a8a8a]">
+      <div className="rounded-md border-2 border-dashed border-border p-8 text-center">
+        <p className="text-sm text-ink-muted">
           Your LinkedIn post preview will appear here
         </p>
       </div>
     );
   }
 
+  if (!content && isLoading) {
+    return (
+      <div className="rounded-md border border-border-light bg-surface p-4 shadow-sm space-y-4">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-3/4" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-[10px] border border-[#efefea] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      {/* Post header */}
+    <div className="rounded-md border border-border-light bg-surface shadow-sm">
       <div className="flex items-start gap-3 p-4 pb-0">
-        <div className="h-12 w-12 rounded-full bg-[#eeeee9] flex items-center justify-center text-[#4a4a4a] font-semibold text-lg flex-shrink-0">
+        <div className="h-12 w-12 rounded-full bg-surface-muted flex items-center justify-center text-ink-light font-semibold text-lg flex-shrink-0">
           {userName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-[#1a1a1a]">{userName}</p>
-          <p className="text-xs text-[#8a8a8a]">{userHeadline}</p>
-          <p className="text-xs text-[#8a8a8a]">Just now · 🌐</p>
+          <p className="text-sm font-semibold text-ink">{userName}</p>
+          <p className="text-xs text-ink-muted">{userHeadline}</p>
+          <p className="text-xs text-ink-muted">Just now</p>
         </div>
       </div>
 
-      {/* Post content */}
       <div className="px-4 py-3">
-        <div className="text-sm leading-relaxed text-[#4a4a4a] whitespace-pre-wrap">
-          {content}
-          {isLoading && (
-            <span className="inline-block w-0.5 h-4 bg-[#1a1a1a] animate-pulse ml-0.5 align-text-bottom" />
+        <div className="text-sm leading-relaxed text-ink-light">
+          {isLoading ? (
+            <span className="whitespace-pre-wrap">
+              {content}
+              <span className="inline-block w-0.5 h-4 bg-ink animate-pulse ml-0.5 align-text-bottom" />
+            </span>
+          ) : (
+            (() => {
+              const paragraphs = content.split(/\n\n+/).filter(Boolean);
+              if (paragraphs.length === 0) return null;
+              return paragraphs.map((para, i) => {
+                let id: string | undefined;
+                if (i === 0) id = "tour-post-hook";
+                if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
+                return (
+                  <span
+                    key={i}
+                    id={id}
+                    style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? "0.75em" : 0 }}
+                  >
+                    {para}
+                  </span>
+                );
+              });
+            })()
           )}
         </div>
       </div>
 
-      {/* Engagement bar */}
-      <div className="border-t border-[#efefea] px-4 py-1">
-        <div className="flex items-center gap-1 text-xs text-[#8a8a8a] py-1">
-          <span>👍❤️</span>
-          <span className="ml-1">You and 42 others</span>
-          <span className="ml-auto">12 comments · 5 reposts</span>
+      <div className="border-t border-border-light px-4 py-1">
+        <div className="flex items-center gap-1 text-xs text-ink-muted py-1">
+          <span>42 reactions</span>
+          <span className="ml-auto">12 comments</span>
         </div>
       </div>
 
-      {/* Action bar */}
-      <div className="border-t border-[#efefea] flex">
+      <div className="border-t border-border-light flex">
         {["Like", "Comment", "Repost", "Send"].map((action) => (
           <button
             key={action}
-            className="flex-1 py-2.5 text-xs font-medium text-[#8a8a8a] hover:bg-[#f7f7f5] transition"
+            className="flex-1 py-2.5 text-xs font-medium text-ink-muted hover:bg-surface-subtle transition"
           >
             {action}
           </button>

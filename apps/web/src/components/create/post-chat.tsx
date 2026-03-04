@@ -15,10 +15,11 @@ const QUICK_IDEAS = [
 interface PostChatProps {
   onReadyToGenerate: (enrichedTopic: string) => void;
   onReset: () => void;
+  onStop?: () => void;
   isGenerating: boolean;
 }
 
-export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatProps) {
+export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: PostChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasTriggeredRef = useRef(false);
 
@@ -29,12 +30,10 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
 
   const isStreaming = status === "streaming" || status === "submitted";
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming, isGenerating]);
 
-  // Watch for ready_to_generate tool invocation
   const handleGenerate = useCallback(
     (enrichedTopic: string) => {
       if (hasTriggeredRef.current) return;
@@ -53,7 +52,7 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
         if (
           part.type === "tool-invocation" &&
           part.toolInvocation.toolName === "ready_to_generate" &&
-          part.toolInvocation.state === "call"
+          (part.toolInvocation.state === "call" || part.toolInvocation.state === "result")
         ) {
           handleGenerate(
             (part.toolInvocation.args as { enrichedTopic: string }).enrichedTopic
@@ -65,7 +64,6 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
   }, [messages, handleGenerate]);
 
   const visibleMessages = messages.filter((m) => {
-    // Hide pure tool-call messages with no text
     const textParts = (m.parts ?? []).filter((p) => p.type === "text");
     const hasToolCall = (m.parts ?? []).some(
       (p) =>
@@ -80,20 +78,15 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div>
-        <h1
-          className="text-[28px] text-[#1a1a1a] tracking-[-0.02em] leading-tight"
-          style={{ fontFamily: "var(--font-display)", fontWeight: 400 }}
-        >
+        <h1 className="font-display text-3xl text-ink tracking-tight leading-tight">
           Create a Post
         </h1>
-        <p className="mt-1 text-sm text-[#8a8a8a]">
+        <p className="mt-1 text-sm text-ink-muted">
           Tell me what you want to post about and I&apos;ll write it in your voice.
         </p>
       </div>
 
-      {/* Messages */}
       {visibleMessages.length > 0 && (
         <div className="mt-4 space-y-3 flex-1 overflow-y-auto max-h-64">
           {visibleMessages.map((message) => {
@@ -111,24 +104,29 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
           })}
           {isStreaming && <TypingIndicator />}
           {isGenerating && (
-            <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl border border-[#e2e2dc] bg-[#f7f7f5] px-4 py-3 text-sm text-[#4a4a4a] font-medium shadow-sm">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#1a1a1a] border-t-transparent" />
+            <div className="flex justify-start items-center gap-3">
+              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-subtle px-4 py-3 text-sm text-ink-light font-medium shadow-sm">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink border-t-transparent" />
                 Writing your post...
               </div>
+              {onStop && (
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="text-sm text-ink-muted hover:text-ink underline underline-offset-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  Stop generating
+                </button>
+              )}
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
       )}
 
-      {/* Quick Ideas chips — only before first message */}
       {showQuickIdeas && (
-        <div className="mt-4">
-          <p
-            className="text-[10px] font-medium text-[#8a8a8a] mb-2 tracking-[0.08em] uppercase"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
+        <div id="tour-quick-ideas" className="mt-4">
+          <p className="font-mono text-[10px] font-medium text-ink-muted mb-2 tracking-widest uppercase">
             Quick Ideas
           </p>
           <div className="flex flex-wrap gap-2">
@@ -136,7 +134,7 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
               <button
                 key={idea}
                 onClick={() => append({ role: "user", content: idea })}
-                className="rounded-full border border-[#e2e2dc] px-3 py-1 text-xs text-[#4a4a4a] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition"
+                className="rounded-full border border-border px-3 py-1 text-xs text-ink-light hover:border-ink hover:text-ink transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {idea}
               </button>
@@ -145,12 +143,8 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
         </div>
       )}
 
-      {/* Input area — hide when generating */}
       {!isGenerating && (
-        <form
-          onSubmit={handleSubmit}
-          className="mt-4 flex gap-3"
-        >
+        <form onSubmit={handleSubmit} className="mt-4 flex gap-3">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -167,23 +161,22 @@ export function PostChat({ onReadyToGenerate, onReset, isGenerating }: PostChatP
                 : "Type your response..."
             }
             rows={3}
-            className="flex-1 resize-none rounded-xl border border-[#e2e2dc] bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#8a8a8a] focus:border-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#1a1a1a] disabled:opacity-50"
+            className="flex-1 resize-none rounded-md border border-border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="self-end rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="self-end rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Send
           </button>
         </form>
       )}
 
-      {/* Start over */}
       {(visibleMessages.length > 0 || isGenerating) && (
         <button
           onClick={onReset}
-          className="mt-3 text-xs text-[#8a8a8a] underline underline-offset-2 hover:text-[#4a4a4a] transition self-start"
+          className="mt-3 text-xs text-ink-muted underline underline-offset-2 hover:text-ink-light transition self-start"
         >
           Start over
         </button>

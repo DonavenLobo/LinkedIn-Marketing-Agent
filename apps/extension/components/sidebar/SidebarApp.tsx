@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getTokens } from "../../lib/auth";
 import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from "../../lib/api";
 import { API_URL } from "../../lib/config";
@@ -6,10 +7,24 @@ import { AuthGate } from "./AuthGate";
 import { PostChat } from "./PostChat";
 import { PostPreview } from "./PostPreview";
 import { SettingsPanel } from "./SettingsPanel";
+import { VoiceOnboarding } from "./VoiceOnboarding";
+import { TourOverlay } from "./TourOverlay";
+import {
+  SIDEBAR_TOUR_STEPS,
+  POST_REVIEW_TOUR_STEPS,
+  hasSidebarTourBeenSeen,
+  markSidebarTourSeen,
+  hasPostReviewTourBeenSeen,
+  markPostReviewTourSeen,
+} from "../../lib/tour";
 
 type Status = "loading" | "logged-out" | "needs-onboarding" | "ready";
 
-export function SidebarApp() {
+interface SidebarAppProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+export function SidebarApp({ containerRef }: SidebarAppProps) {
   const [status, setStatus] = useState<Status>("loading");
   const [content, setContent] = useState("");
   const [postId, setPostId] = useState<string | null>(null);
@@ -18,7 +33,14 @@ export function SidebarApp() {
   const [isFeedbackStreaming, setIsFeedbackStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
   const abortRef = useRef(false);
+
+  // Tour state
+  const [showSidebarTour, setShowSidebarTour] = useState(false);
+  const [showPostTour, setShowPostTour] = useState(false);
+  const hasShownPostTourRef = useRef(false);
+  const prevStreamingRef = useRef(false);
 
   useEffect(() => {
     checkStatus();
@@ -38,6 +60,32 @@ export function SidebarApp() {
     const interval = setInterval(checkStatus, 10_000);
     return () => clearInterval(interval);
   }, [status]);
+
+  // Trigger sidebar tour on first "ready"
+  useEffect(() => {
+    if (status === "ready") {
+      hasSidebarTourBeenSeen().then((seen) => {
+        if (!seen) {
+          setTimeout(() => setShowSidebarTour(true), 600);
+        }
+      });
+    }
+  }, [status]);
+
+  // Trigger post review tour after first generation completes
+  useEffect(() => {
+    if (prevStreamingRef.current && !isStreaming && content) {
+      if (!hasShownPostTourRef.current) {
+        hasPostReviewTourBeenSeen().then((seen) => {
+          if (!seen) {
+            hasShownPostTourRef.current = true;
+            setTimeout(() => setShowPostTour(true), 500);
+          }
+        });
+      }
+    }
+    prevStreamingRef.current = isStreaming;
+  }, [isStreaming, content]);
 
   async function checkStatus() {
     const { access_token } = await getTokens();
@@ -142,72 +190,129 @@ export function SidebarApp() {
       <div className="sidebar-header">
         <div>
           <h1>LinkedIn Agent</h1>
-          <p className="subtitle">AI-powered posts in your voice</p>
+          <p className="subtitle font-mono">AI-powered posts in your voice</p>
         </div>
         {status === "ready" && (
-          <button
-            className="settings-gear-btn"
-            onClick={() => setShowSettings(!showSettings)}
-            title="Brand guidelines"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button
+              className="tour-help-btn"
+              onClick={() => setShowSidebarTour(true)}
+              title="Take a tour"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </button>
+            <button
+              className="settings-gear-btn"
+              onClick={() => setShowSettings(!showSettings)}
+              title="Brand guidelines"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
         )}
       </div>
       <div className="sidebar-content">
         {showSettings && status === "ready" && (
           <SettingsPanel onClose={() => setShowSettings(false)} />
         )}
-        {status === "logged-out" && <AuthGate />}
 
-        {status === "needs-onboarding" && (
-          <div className="auth-gate">
-            <h2>Almost there!</h2>
-            <p>Complete your voice setup so I can write posts that sound like you.</p>
-            <button
-              className="btn-primary"
-              onClick={() => window.open(`${API_URL}/onboarding`, "_blank")}
+        <AnimatePresence mode="wait">
+          {status === "logged-out" && (
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
             >
-              Complete Voice Setup
-            </button>
-            <button
-              className="btn-secondary"
-              style={{ marginTop: 8 }}
-              onClick={checkStatus}
-            >
-              I&apos;m done — refresh
-            </button>
-          </div>
-        )}
+              <AuthGate />
+            </motion.div>
+          )}
 
-        {status === "ready" && (
-          <>
-            <PostChat
-              onReadyToGenerate={handleGenerate}
-              isGenerating={isStreaming}
-            />
-            {error && <div className="error-msg">{error}</div>}
-            <PostPreview
-              content={content}
-              isStreaming={isStreaming}
-              isFeedbackStreaming={isFeedbackStreaming}
-              postId={postId}
-              topic={topic}
-              onApprove={handleApprove}
-              onFeedback={handleFeedback}
-              onEdit={handleEdit}
-              onNewPost={() => {
-                setContent("");
-                setPostId(null);
-                document.querySelector(".sidebar-content")?.scrollTo(0, 0);
-              }}
-            />
-          </>
-        )}
+          {status === "needs-onboarding" && (
+            <motion.div
+              key="onboarding"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <VoiceOnboarding
+                onComplete={() => {
+                  checkStatus();
+                }}
+                onFallbackToWeb={() => {
+                  window.open(`${API_URL}/onboarding`, "_blank");
+                }}
+              />
+            </motion.div>
+          )}
+
+          {status === "ready" && (
+            <motion.div
+              key="main"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <PostChat
+                key={chatKey}
+                onReadyToGenerate={handleGenerate}
+                isGenerating={isStreaming}
+              />
+              {error && <div className="error-msg">{error}</div>}
+              <PostPreview
+                content={content}
+                isStreaming={isStreaming}
+                isFeedbackStreaming={isFeedbackStreaming}
+                postId={postId}
+                topic={topic}
+                onApprove={handleApprove}
+                onFeedback={handleFeedback}
+                onEdit={handleEdit}
+                onNewPost={() => {
+                  setContent("");
+                  setPostId(null);
+                  setTopic("");
+                  setError(null);
+                  setChatKey((k) => k + 1);
+                  document.querySelector(".sidebar-content")?.scrollTo(0, 0);
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Tour overlays */}
+      {showSidebarTour && containerRef.current && (
+        <TourOverlay
+          steps={SIDEBAR_TOUR_STEPS}
+          containerEl={containerRef.current}
+          onComplete={() => {
+            setShowSidebarTour(false);
+            markSidebarTourSeen();
+          }}
+        />
+      )}
+      {showPostTour && containerRef.current && (
+        <TourOverlay
+          steps={POST_REVIEW_TOUR_STEPS}
+          containerEl={containerRef.current}
+          onComplete={() => {
+            setShowPostTour(false);
+            markPostReviewTourSeen();
+          }}
+        />
+      )}
     </>
   );
 }

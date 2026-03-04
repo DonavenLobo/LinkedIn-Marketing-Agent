@@ -1,112 +1,97 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "../../public/logo.png";
+import { HeroSection } from "@/components/landing/hero-section";
+import { VoiceprintHologram } from "@/components/landing/voiceprint-hologram";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import type { Tone } from "@/lib/demo-generator";
 
 export default function Home() {
+  const [activeTone, setActiveTone] = useState<Tone>("direct");
+
   return (
-    <main className="min-h-screen bg-[#f7f7f5]">
-      {/* Nav */}
-      <header className="border-b border-[#e2e2dc] bg-white">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src={logo} alt="LinkedIn Agent" width={24} height={24} />
-            <span className="text-sm font-semibold text-[#1a1a1a] tracking-[-0.01em]">
+    <main className="min-h-screen bg-surface">
+      {/* Navigation */}
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-surface/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 md:px-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src={logo} alt="" width={24} height={24} aria-hidden="true" />
+            <span className="text-sm font-semibold text-ink tracking-tight">
               LinkedIn Agent
             </span>
           </Link>
-          <Link
-            href="/auth/login"
-            className="rounded-lg border border-[#e2e2dc] px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:bg-[#f7f7f5] transition"
-          >
-            Sign In
-          </Link>
+
+          <nav className="hidden items-center gap-6 md:flex" aria-label="Main navigation">
+            <a
+              href="#how-it-works"
+              className="text-sm text-ink-light transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              How it works
+            </a>
+            <Link
+              href="/auth/login"
+              className="text-sm text-ink-light transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/auth/login"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Try the demo
+            </Link>
+          </nav>
+
+          {/* Mobile menu button */}
+          <div className="flex items-center gap-3 md:hidden">
+            <Link
+              href="/auth/login"
+              className="rounded-lg bg-accent px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Try the demo
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <div className="mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
-        <div className="mb-4 inline-block font-mono text-[11px] font-medium text-[#2563eb] uppercase tracking-[0.08em]">
-          AI-Powered LinkedIn Content
-        </div>
-        <h1
-          className="text-5xl text-[#1a1a1a] leading-[1.2] tracking-[-0.03em] sm:text-6xl"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Write LinkedIn posts
-          <br />
-          <span className="text-[#2563eb]">in your voice</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-[15px] text-[#8a8a8a] leading-[1.6]">
-          Our AI learns your unique writing style through a quick conversation, then generates authentic LinkedIn posts that sound like you.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-3">
-          <Link
-            href="/auth/login"
-            className="rounded-lg bg-[#1a1a1a] px-8 py-3 text-sm font-medium text-white hover:bg-[#333] transition tracking-[-0.01em]"
-          >
-            Get Started Free
-          </Link>
-          <Link
-            href="/auth/login"
-            className="rounded-lg border border-[#e2e2dc] px-8 py-3 text-sm font-medium text-[#1a1a1a] hover:bg-[#f7f7f5] transition"
-          >
-            Sign In
-          </Link>
-        </div>
+      {/* A) Hero: Signal Engine */}
+      <HeroSection activeTone={activeTone} onToneChange={setActiveTone} />
+
+      {/* B) Voiceprint Hologram */}
+      <div className="border-t border-border-light bg-surface">
+        <VoiceprintHologram activeTone={activeTone} onToneChange={setActiveTone} />
       </div>
 
-      {/* How it works */}
-      <div className="mx-auto max-w-4xl px-6 py-16">
-        <h2
-          className="text-center text-[28px] text-[#1a1a1a] tracking-[-0.02em] mb-12"
-          style={{ fontFamily: "var(--font-display)", fontWeight: 400 }}
-        >
-          How it works
-        </h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              step: "01",
-              title: "Quick voice setup",
-              desc: "Have a conversation with our onboarding agent. Takes 10 minutes.",
-            },
-            {
-              step: "02",
-              title: "AI learns your style",
-              desc: "Our AI analyzes your tone, vocabulary, and formatting preferences.",
-            },
-            {
-              step: "03",
-              title: "Generate posts",
-              desc: "Enter a topic — get a LinkedIn post that sounds authentically you.",
-            },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="rounded-[10px] border border-[#efefea] bg-white p-6"
+      {/* C) How it works */}
+      <HowItWorks />
+
+      {/* D) Final CTA band */}
+      <section className="border-t border-border-light bg-surface py-20 sm:py-24">
+        <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
+          <h2 className="font-display text-3xl text-ink tracking-tight sm:text-4xl">
+            Start in under two minutes.
+          </h2>
+          <p className="mt-4 text-base text-ink-muted">
+            No credit card. No setup complexity. Just sign in and go.
+          </p>
+          <div className="mt-8">
+            <Link
+              href="/auth/login"
+              className="inline-flex rounded-lg bg-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div
-                className="mb-3 text-[11px] font-medium text-[#8a8a8a] tracking-[0.05em]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {item.step}
-              </div>
-              <h3 className="text-[15px] font-semibold text-[#1a1a1a] tracking-[-0.01em]">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-[13px] text-[#8a8a8a] leading-[1.6]">{item.desc}</p>
-            </div>
-          ))}
+              Sign in
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#e2e2dc] py-8 text-center">
-        <span
-          className="text-[11px] text-[#8a8a8a] tracking-[0.02em]"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          Built for the IVS Hackathon 2026
+      <footer className="border-t border-border py-8 text-center bg-surface-subtle">
+        <span className="font-mono text-xs text-ink-muted tracking-wide">
+          International Venture Studio
         </span>
       </footer>
     </main>

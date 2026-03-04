@@ -1,0 +1,138 @@
+:root {
+    --ink: #1a1a1a;
+    --ink-light: #4a4a4a;
+    --ink-muted: #8a8a8a;
+    --surface: #ffffff;
+    --surface-subtle: #f7f7f5;
+    --surface-muted: #eeeee9;
+    --border: #e2e2dc;
+    --border-light: #efefea;
+    --accent: #0a66c2;
+    --accent-hover: #004182;
+    --accent-light: #e8f3ff;
+    --success: #057a55;
+    --error: #e02424;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    /* Glassmorphism */
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --ring: var(--accent-light);
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--surface);
+    color: var(--ink);
+    min-width: 320px;
+}
+
+.popup-container {
+    padding: 20px 24px 24px;
+}
+
+.popup-center {
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--ink);
+}
+
+.popup-subtitle {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin: 0 0 20px 0;
+}
+
+.popup-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.popup-info {
+    font-size: 13px;
+    color: var(--ink-light);
+    margin: 0 0 4px 0;
+    line-height: 1.5;
+}
+
+.popup-success {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--success);
+    margin: 0;
+}
+
+.popup-hint {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin: 0;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: var(--accent);
+    color: var(--surface);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-light);
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 8px 16px;
+    background-color: transparent;
+    color: var(--ink-light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.btn-secondary:hover {
+    background-color: var(--surface-subtle);
+    color: var(--ink);
+}
+
+.btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-light);
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

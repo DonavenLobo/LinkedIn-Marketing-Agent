@@ -1,84 +1,216 @@
 @import "tailwindcss";
 
-:root {
-  /* Ink (text) */
-  --ink: #1a1a1a;
-  --ink-light: #4a4a4a;
-  --ink-muted: #8a8a8a;
+@theme {
+  --color-ink: var(--ink);
+  --color-ink-light: var(--ink-light);
+  --color-ink-muted: var(--ink-muted);
 
-  /* Surfaces */
-  --surface: #ffffff;
-  --surface-subtle: #f7f7f5;
-  --surface-muted: #eeeee9;
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-muted: var(--surface-muted);
 
-  /* Borders */
-  --border: #e2e2dc;
-  --border-light: #efefea;
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
 
-  /* Accent */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-light: #eff4ff;
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
 
-  /* Semantic */
-  --success: #16a34a;
-  --success-light: #f0fdf4;
-  --warning: #d97706;
-  --warning-light: #fffbeb;
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-error: var(--error);
+  --color-error-light: var(--error-light);
 
-  /* Font families */
   --font-display: 'Instrument Serif', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'DM Mono', 'SF Mono', monospace;
 
-  /* Font sizes */
-  --text-hero: 36px;
-  --text-title: 28px;
-  --text-heading: 18px;
-  --text-body: 15px;
-  --text-ui: 13px;
-  --text-caption: 11px;
+  /* shadcn/ui variables */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-shadcn: var(--accent-shadcn);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border-shadcn: var(--border-shadcn);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  /* Line heights */
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.7;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: 9999px;
+  --radius: var(--radius-md);
 
-  /* Letter spacing */
-  --tracking-tight: -0.03em;
-  --tracking-normal: -0.01em;
-  --tracking-wide: 0.05em;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
 
-  /* Spacing (8px base) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 24px rgba(0,0,0,0.08);
-
-  /* Transitions */
-  --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --duration-fast: 150ms;
-  --duration-normal: 200ms;
+  --color-accent-glow: var(--accent-glow);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
 }
 
-body {
+@layer base {
+  :root {
+    /* Base tokens */
+    --ink: #1a1a1a;
+    --ink-light: #4a4a4a;
+    --ink-muted: #8a8a8a;
+    
+    --surface: #ffffff;
+    --surface-subtle: #f7f7f5;
+    --surface-muted: #eeeee9;
+    
+    --border: #e2e2dc;
+    --border-light: #efefea;
+    
+    --accent: #0a66c2;
+    --accent-hover: #004182;
+    --accent-light: #e8f3ff;
+    
+    --success: #057a55;
+    --success-light: #f0fdf4;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --error: #e02424;
+    --error-light: #fef2f2;
+
+    --accent-glow: rgba(10, 102, 194, 0.25);
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.18);
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+
+    /* shadcn/ui mappings */
+    --background: var(--surface-subtle);
+    --foreground: var(--ink);
+    --card: var(--surface);
+    --card-foreground: var(--ink);
+    --popover: var(--surface);
+    --popover-foreground: var(--ink);
+    --primary: var(--accent);
+    --primary-foreground: var(--surface);
+    --secondary: var(--surface-muted);
+    --secondary-foreground: var(--ink);
+    --muted: var(--surface-subtle);
+    --muted-foreground: var(--ink-muted);
+    --accent-shadcn: var(--surface-muted);
+    --accent-foreground: var(--ink);
+    --destructive: var(--error);
+    --destructive-foreground: var(--surface);
+    --border-shadcn: var(--border);
+    --input: var(--border);
+    --ring: var(--accent-light);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+}
+
+/* ── driver.js tour theme overrides ── */
+.driver-popover.la-tour-popover {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
+  color: var(--ink);
+  padding: 20px;
+  max-width: 320px;
+}
+
+.driver-popover.la-tour-popover .driver-popover-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.driver-popover.la-tour-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: var(--ink-light);
+  line-height: 1.5;
+}
+
+.driver-popover.la-tour-popover .driver-popover-progress-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+}
+
+.driver-popover.la-tour-popover .driver-popover-prev-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-light);
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  text-shadow: none;
+  transition: all 0.2s;
+}
+
+.driver-popover.la-tour-popover .driver-popover-prev-btn:hover {
   background: var(--surface-subtle);
   color: var(--ink);
+}
+
+.driver-popover.la-tour-popover .driver-popover-next-btn,
+.driver-popover.la-tour-popover .driver-popover-close-btn-text {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  text-shadow: none;
+  transition: background 0.2s;
+}
+
+.driver-popover.la-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.la-tour-popover .driver-popover-close-btn-text:hover {
+  background: var(--accent-hover);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-top {
+  border-bottom-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-bottom {
+  border-top-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-left {
+  border-right-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-right {
+  border-left-color: var(--glass);
 }

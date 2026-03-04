@@ -5,18 +5,25 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
+import { Progress } from "@linkedin-agent/shared";
 import type { ProfileToolData, TranscriptMessage } from "@linkedin-agent/shared";
 
 interface OnboardingChatProps {
   userId: string;
+  /** Where to redirect after profile is ready. Default: /create */
+  redirectTo?: string;
+  /** When true, use h-full instead of h-screen for embedding in a container */
+  embedded?: boolean;
+  /** Whether this is a redo flow (used for downstream routing/copy) */
+  isRedo?: boolean;
 }
 
-function getProgressLabel(userMessageCount: number, isBuilding: boolean): string {
-  if (isBuilding) return "Creating your voice profile...";
-  if (userMessageCount <= 1) return "Getting to know you...";
-  if (userMessageCount <= 3) return "Understanding your style...";
-  if (userMessageCount <= 5) return "Dialing in your voice...";
-  return "Almost there...";
+function getProgress(userMessageCount: number, isBuilding: boolean): { label: string; value: number } {
+  if (isBuilding) return { label: "Creating your voice profile...", value: 95 };
+  if (userMessageCount <= 1) return { label: "Getting to know you...", value: 15 };
+  if (userMessageCount <= 3) return { label: "Understanding your style...", value: 40 };
+  if (userMessageCount <= 5) return { label: "Dialling in your voice...", value: 65 };
+  return { label: "Almost there...", value: 85 };
 }
 
 interface ProfileResult {
@@ -72,7 +79,12 @@ function ProfileReadyCard({
   );
 }
 
-export function OnboardingChat({ userId }: OnboardingChatProps) {
+export function OnboardingChat({
+  userId,
+  redirectTo = "/create",
+  embedded,
+  isRedo = false,
+}: OnboardingChatProps) {
   const router = useRouter();
   const [isBuilding, setIsBuilding] = useState(false);
   const [profileResult, setProfileResult] = useState<ProfileResult | null>(null);
@@ -184,13 +196,16 @@ export function OnboardingChat({ userId }: OnboardingChatProps) {
   );
 
   return (
-    <div className="mx-auto flex h-screen max-w-2xl flex-col">
+    <div
+      className={`mx-auto flex max-w-2xl flex-col ${embedded ? "h-full min-h-0" : "h-screen"}`}
+    >
       {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4">
-        <h1 className="text-lg font-semibold text-gray-900">Voice Profile Setup</h1>
-        <p className="text-sm text-gray-500">
-          {getProgressLabel(userMessageCount, isBuilding)}
-        </p>
+      <div className="border-b border-border bg-surface/80 backdrop-blur-sm px-6 py-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-ink">Voice Profile Setup</h1>
+          <span className="text-xs text-ink-muted">{getProgress(userMessageCount, isBuilding).label}</span>
+        </div>
+        <Progress value={getProgress(userMessageCount, isBuilding).value} className="h-1.5" />
       </div>
 
       {/* Messages */}
@@ -261,7 +276,12 @@ export function OnboardingChat({ userId }: OnboardingChatProps) {
         {profileResult && (
           <ProfileReadyCard
             result={profileResult}
-            onContinue={() => router.push("/create")}
+            onContinue={() => {
+              const params = new URLSearchParams();
+              params.set("redirectTo", redirectTo);
+              if (isRedo) params.set("redo", "1");
+              router.push(`/onboarding/posts?${params.toString()}`);
+            }}
           />
         )}
 

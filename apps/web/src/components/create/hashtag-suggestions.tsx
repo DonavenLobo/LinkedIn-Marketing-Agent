@@ -66,6 +66,31 @@ export function HashtagSuggestions({ postContent, postId: _postId }: HashtagSugg
           ))}
         </div>
       )}
+
+      {/* Media engagement tip */}
+      <div className="mt-3 pt-3 border-t border-[#e2e2dc]">
+        <p className="text-[10px] font-semibold text-[#8a8a8a] uppercase tracking-wide mb-2">
+          Media Tip
+        </p>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-xs text-[#4a4a4a]">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#16a34a] flex-shrink-0" />
+            <span><span className="font-medium">Video</span> — highest engagement</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#4a4a4a]">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#2563eb] flex-shrink-0" />
+            <span><span className="font-medium">Carousel</span> — strong reach</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#4a4a4a]">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#f59e0b] flex-shrink-0" />
+            <span><span className="font-medium">Single image</span> — solid boost</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#6b7280]">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#d1d5db] flex-shrink-0" />
+            <span><span className="font-medium">Text only</span> — least reach</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
