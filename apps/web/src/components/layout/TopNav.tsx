@@ -101,6 +101,11 @@ export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
                                         Account
                                     </Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/settings" className="flex cursor-pointer rounded-lg px-3 py-2.5">
+                                        Settings
+                                    </Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="text-destructive focus:bg-error-light focus:text-destructive cursor-pointer rounded-lg px-3 py-2.5"
                                     onClick={handleSignOut}

@@ -91,7 +91,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border py-8 text-center bg-surface-subtle">
         <span className="font-mono text-xs text-ink-muted tracking-wide">
-          Built for the IVS Hackathon 2026
+          International Venture Studio
         </span>
       </footer>
     </main>

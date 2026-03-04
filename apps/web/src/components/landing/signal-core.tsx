@@ -57,15 +57,14 @@ function SignalNodes({ generating, mousePos, onExpandStart }: SignalNodesProps) 
   const prevGenerating = useRef(false);
   const expandCallbackFired = useRef(false);
 
+  // Pause rendering when tab is hidden to save GPU resources.
+  // R3F's internal loop handles resume automatically, so we only need to stop it.
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         gl.setAnimationLoop(null);
-      } else {
-        gl.setAnimationLoop(
-          gl.render.bind(gl, gl.domElement as unknown as THREE.Scene, {} as THREE.Camera)
-        );
       }
+      // R3F re-enables the loop on the next frame request, so no manual restart needed.
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
