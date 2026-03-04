@@ -34,10 +34,11 @@ function extractName(transcript: TranscriptMessage[]): string | null {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { transcript, toolData, userId } = body as {
+    const { transcript, toolData, userId, writingSamples: externalSamples } = body as {
       transcript: TranscriptMessage[];
       toolData: ProfileToolData;
       userId: string;
+      writingSamples?: string[];
     };
 
     if (!transcript || !userId || !toolData) {
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const isVoiceOnboarding = Array.isArray(externalSamples);
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -92,7 +95,16 @@ ${toolData.summary}
 Confidence level reported by interviewer: ${toolData.confidence}
 
 FULL CONVERSATION TRANSCRIPT:
-${formattedTranscript}`;
+${formattedTranscript}${
+      isVoiceOnboarding && externalSamples && externalSamples.length > 0
+        ? `
+
+WRITING SAMPLES PROVIDED SEPARATELY:
+The following are actual writing samples the user pasted after a voice conversation. These are critical for analyzing written style (formatting, punctuation, emoji usage, line breaks) since the transcript above was spoken, not typed.
+
+${externalSamples.map((s: string, i: number) => `--- Sample ${i + 1} ---\n${s}`).join("\n\n")}`
+        : ""
+    }`;
 
     const { text: analysis } = await generateText({
       model: anthropic("claude-sonnet-4-6"),
@@ -153,7 +165,10 @@ Respond ONLY with valid JSON matching this exact schema:
     }
 
     // ── Save voice profile to DB ─────────────────────────────────────────────
-    const writingSamples = extractWritingSamples(transcript);
+    const transcriptSamples = extractWritingSamples(transcript);
+    const writingSamples = isVoiceOnboarding && externalSamples && externalSamples.length > 0
+      ? externalSamples
+      : transcriptSamples;
     const extractedName = extractName(transcript);
 
     // Deactivate any existing profiles so we have at most one active
@@ -177,10 +192,13 @@ Respond ONLY with valid JSON matching this exact schema:
         sample_posts: writingSamples,
         system_prompt: voiceData.system_prompt,
         onboarding_answers: {
-          format: "conversation_v2",
+          format: isVoiceOnboarding ? "conversation_v3_voice" : "conversation_v2",
           transcript,
           tool_data: toolData,
           analysis_output: analysis,
+          ...(isVoiceOnboarding && externalSamples && externalSamples.length > 0
+            ? { writing_samples: externalSamples }
+            : {}),
         },
       })
       .select()

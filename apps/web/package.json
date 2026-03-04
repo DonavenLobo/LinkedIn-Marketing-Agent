@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.0",
+    "@elevenlabs/react": "^0.14.1",
     "@linkedin-agent/shared": "workspace:*",
     "@elevenlabs/client": "^0.15.0",
     "@react-three/drei": "^10.7.7",
@@ -19,6 +20,7 @@
     "ai": "^4.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "elevenlabs": "^1.59.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.468.0",
     "next": "^15.1.0",

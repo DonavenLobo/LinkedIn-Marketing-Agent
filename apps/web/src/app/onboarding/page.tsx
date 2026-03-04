@@ -3,6 +3,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { OnboardingChat } from "@/components/onboarding/onboarding-chat";
 import { OnboardingEntry } from "@/components/onboarding/onboarding-entry";
 import { VoiceAgentOnboarding } from "@/components/onboarding/voice-agent-onboarding";
+import { OnboardingWrapper } from "@/components/onboarding/onboarding-wrapper";
 
 interface OnboardingPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
