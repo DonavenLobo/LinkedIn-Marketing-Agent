@@ -74,19 +74,21 @@ export function VoiceAgentOnboarding({ isRedo }: VoiceAgentOnboardingProps) {
       const conversation = await Conversation.startSession({
         signedUrl,
         connectionType: "websocket",
-        onStatusChange: (nextStatus) => {
-          if (nextStatus === "connected") {
+        onStatusChange: (nextStatus: any) => {
+          const s = typeof nextStatus === "string" ? nextStatus : nextStatus?.status;
+          if (s === "connected") {
             setStatus("connected");
-          } else if (nextStatus === "connecting") {
+          } else if (s === "connecting") {
             setStatus("connecting");
-          } else if (nextStatus === "disconnected") {
+          } else if (s === "disconnected") {
             setStatus("ended");
             setAgentMode("idle");
           }
         },
-        onModeChange: (mode) => {
-          if (mode === "speaking" || mode === "listening") {
-            setAgentMode(mode);
+        onModeChange: (mode: any) => {
+          const m = typeof mode === "string" ? mode : mode?.mode;
+          if (m === "speaking" || m === "listening") {
+            setAgentMode(m);
           } else {
             setAgentMode("idle");
           }

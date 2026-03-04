@@ -59,10 +59,31 @@ export function LinkedInPreview({
       </div>
 
       <div className="px-4 py-3">
-        <div className="text-sm leading-relaxed text-ink-light whitespace-pre-wrap">
-          {content}
-          {isLoading && (
-            <span className="inline-block w-0.5 h-4 bg-ink animate-pulse ml-0.5 align-text-bottom" />
+        <div className="text-sm leading-relaxed text-ink-light">
+          {isLoading ? (
+            <span className="whitespace-pre-wrap">
+              {content}
+              <span className="inline-block w-0.5 h-4 bg-ink animate-pulse ml-0.5 align-text-bottom" />
+            </span>
+          ) : (
+            (() => {
+              const paragraphs = content.split(/\n\n+/).filter(Boolean);
+              if (paragraphs.length === 0) return null;
+              return paragraphs.map((para, i) => {
+                let id: string | undefined;
+                if (i === 0) id = "tour-post-hook";
+                if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
+                return (
+                  <span
+                    key={i}
+                    id={id}
+                    style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? "0.75em" : 0 }}
+                  >
+                    {para}
+                  </span>
+                );
+              });
+            })()
           )}
         </div>
       </div>

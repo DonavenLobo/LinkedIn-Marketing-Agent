@@ -125,7 +125,7 @@ export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: P
       )}
 
       {showQuickIdeas && (
-        <div className="mt-4">
+        <div id="tour-quick-ideas" className="mt-4">
           <p className="font-mono text-[10px] font-medium text-ink-muted mb-2 tracking-widest uppercase">
             Quick Ideas
           </p>

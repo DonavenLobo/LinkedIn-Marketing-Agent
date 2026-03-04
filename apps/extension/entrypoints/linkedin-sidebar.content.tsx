@@ -43,21 +43,54 @@ export default defineContentScript({
 
 function SidebarRoot() {
   const [collapsed, setCollapsed] = useState(true);
+  const [showToggleTour, setShowToggleTour] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Show toggle tour on first load
+  useEffect(() => {
+    hasToggleTourBeenSeen().then((seen) => {
+      if (!seen) {
+        setTimeout(() => setShowToggleTour(true), 1000);
+      }
+    });
+  }, []);
+
+  const handleToggleClick = () => {
+    if (showToggleTour) {
+      setShowToggleTour(false);
+      markToggleTourSeen();
+    }
+    setCollapsed(!collapsed);
+  };
 
   return (
     <>
       <button
         className={`sidebar-toggle ${collapsed ? "collapsed" : ""}`}
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={handleToggleClick}
       >
         {collapsed ? "◀" : "▶"}
       </button>
-      <div className={`sidebar-container ${collapsed ? "collapsed" : ""}`}>
-        <SidebarApp />
+
+      {showToggleTour && collapsed && (
+        <>
+          <div className="toggle-tour-pulse" />
+          <div className="toggle-tour-tooltip" onClick={() => { setShowToggleTour(false); markToggleTourSeen(); }}>
+            <div className="toggle-tour-bubble">
+              <p>Click to open your AI writing assistant</p>
+            </div>
+            <div className="toggle-tour-arrow" />
+          </div>
+        </>
+      )}
+
+      <div ref={containerRef} className={`sidebar-container ${collapsed ? "collapsed" : ""}`}>
+        <SidebarApp containerRef={containerRef} />
       </div>
     </>
   );
 }
 
-// Need this import for the useState in SidebarRoot
-import { useState } from "react";
+// Need these imports for the SidebarRoot component
+import { useState, useRef, useEffect } from "react";
+import { hasToggleTourBeenSeen, markToggleTourSeen } from "../lib/tour";

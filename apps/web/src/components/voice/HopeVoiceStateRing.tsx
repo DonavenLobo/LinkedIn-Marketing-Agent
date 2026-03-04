@@ -22,7 +22,7 @@ export function HopeVoiceStateRing({ agentMode, status }: HopeVoiceStateRingProp
           transition: {
             duration: 0.75,
             repeat: Infinity,
-            repeatType: "reverse",
+            repeatType: "reverse" as const,
           },
         }
       : agentMode === "listening"
@@ -32,7 +32,7 @@ export function HopeVoiceStateRing({ agentMode, status }: HopeVoiceStateRingProp
             transition: {
               duration: 1.1,
               repeat: Infinity,
-              repeatType: "reverse",
+              repeatType: "reverse" as const,
             },
           }
         : {

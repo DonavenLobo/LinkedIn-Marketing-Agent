@@ -12,6 +12,11 @@ create table public.user_profiles (
   avatar_url text,
   onboarding_complete boolean default false,
   brand_guidelines text default null,
+  tour_create_seen boolean not null default false,
+  tour_post_review_seen boolean not null default false,
+  tour_toggle_seen boolean not null default false,
+  tour_sidebar_seen boolean not null default false,
+  tour_ext_post_review_seen boolean not null default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

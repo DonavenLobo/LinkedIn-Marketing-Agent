@@ -126,3 +126,91 @@
     font-family: var(--font-body);
   }
 }
+
+/* ── driver.js tour theme overrides ── */
+.driver-popover.la-tour-popover {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-xl);
+  font-family: var(--font-body);
+  color: var(--ink);
+  padding: 20px;
+  max-width: 320px;
+}
+
+.driver-popover.la-tour-popover .driver-popover-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.driver-popover.la-tour-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: var(--ink-light);
+  line-height: 1.5;
+}
+
+.driver-popover.la-tour-popover .driver-popover-progress-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+}
+
+.driver-popover.la-tour-popover .driver-popover-prev-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-light);
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  text-shadow: none;
+  transition: all 0.2s;
+}
+
+.driver-popover.la-tour-popover .driver-popover-prev-btn:hover {
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+
+.driver-popover.la-tour-popover .driver-popover-next-btn,
+.driver-popover.la-tour-popover .driver-popover-close-btn-text {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  text-shadow: none;
+  transition: background 0.2s;
+}
+
+.driver-popover.la-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.la-tour-popover .driver-popover-close-btn-text:hover {
+  background: var(--accent-hover);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-top {
+  border-bottom-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-bottom {
+  border-top-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-left {
+  border-right-color: var(--glass);
+}
+
+.driver-popover.la-tour-popover .driver-popover-arrow-side-right {
+  border-left-color: var(--glass);
+}

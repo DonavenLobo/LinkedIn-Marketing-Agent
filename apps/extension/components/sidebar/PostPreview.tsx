@@ -143,7 +143,26 @@ export function PostPreview({
             <>
               {isFeedbackStreaming ? (
                 <span className="feedback-streaming-text">{content}</span>
-              ) : content}
+              ) : (
+                (() => {
+                  const paragraphs = content.split(/\n\n+/).filter(Boolean);
+                  if (paragraphs.length === 0) return null;
+                  return paragraphs.map((para, i) => {
+                    let id: string | undefined;
+                    if (i === 0) id = "tour-post-hook";
+                    if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
+                    return (
+                      <span
+                        key={i}
+                        id={id}
+                        style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? "0.75em" : 0 }}
+                      >
+                        {para}
+                      </span>
+                    );
+                  });
+                })()
+              )}
               {(isStreaming || isFeedbackStreaming) && <span className="cursor-blink" />}
             </>
           )}

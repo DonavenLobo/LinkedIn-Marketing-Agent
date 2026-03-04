@@ -1,18 +1,25 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useCompletion } from "ai/react";
 import { LinkedInPreview } from "@/components/create/linkedin-preview";
 import { PostActions } from "@/components/create/post-actions";
 import { PostChat } from "@/components/create/post-chat";
 import { SignalCore } from "@/components/landing/signal-core";
+import { startCreatePageTour, startPostReviewTour, hasPostReviewTourBeenSeen } from "@/lib/tour";
 
 export default function CreatePage() {
   const [topic, setTopic] = useState("");
   const [postId, setPostId] = useState<string | null>(null);
   const [displayContent, setDisplayContent] = useState("");
   const [chatKey, setChatKey] = useState(0);
+  const prevLoadingRef = useRef(false);
+
+  // Create page tour on first visit
+  useEffect(() => {
+    startCreatePageTour();
+  }, []);
 
   const { completion, isLoading, stop, setCompletion, data, complete } =
     useCompletion({
@@ -60,12 +67,22 @@ export default function CreatePage() {
     await complete("", { body: { topic } });
   }, [topic, complete, setCompletion]);
 
+  // Post review tour after first generation completes
+  useEffect(() => {
+    if (prevLoadingRef.current && !isLoading && (displayContent || completion)) {
+      hasPostReviewTourBeenSeen().then((seen) => {
+        if (!seen) startPostReviewTour();
+      });
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, displayContent, completion]);
+
   const previewContent = isLoading ? completion : displayContent || completion;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       {/* Left: Chat intake */}
-      <div className="space-y-6">
+      <div id="tour-create-chat" className="space-y-6">
         <PostChat
           key={chatKey}
           onReadyToGenerate={handleReadyToGenerate}
@@ -76,7 +93,7 @@ export default function CreatePage() {
       </div>
 
       {/* Right: Preview with orb background */}
-      <div className="relative min-h-[400px] lg:min-h-[480px]">
+      <div id="tour-preview-area" className="relative min-h-[400px] lg:min-h-[480px]">
         <motion.div
           className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-lg pointer-events-none"
           initial={false}
