@@ -10,6 +10,7 @@
   "dependencies": {
     "@elevenlabs/react": "^0.14.1",
     "@linkedin-agent/shared": "workspace:*",
+    "framer-motion": "^12.34.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -16,6 +16,13 @@
   --success: #057a55;
   --error: #e02424;
 
+  /* Glassmorphism */
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.18);
+
+  /* Focus ring */
+  --ring: var(--accent-light);
+
   all: initial;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 14px;
@@ -120,6 +127,25 @@
   margin: 0 0 20px 0;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider span {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
 .btn-primary {
   display: inline-block;
   padding: 10px 20px;
@@ -137,6 +163,11 @@
 
 .btn-primary:hover {
   background: var(--accent-hover);
+}
+
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring);
 }
 
 .btn-primary:disabled {
@@ -196,6 +227,11 @@
 
 .btn-secondary:hover {
   background: var(--surface-subtle);
+}
+
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring);
 }
 
 /* Post preview */
@@ -726,4 +762,50 @@
 
 .voice-transcript-role {
   font-weight: 600;
+}
+
+/* ── Utility classes ── */
+
+/* Glassmorphism panel */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Mono tracking label (DM Mono uppercase) */
+.font-mono {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+/* Phase label cycling (generating state) */
+.phase-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Voice pulse ring layers */
+.voice-ring-layer {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(10, 102, 194, 0.15);
+}
+
+/* Focus ring for approve button */
+.btn-approve:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring);
 }

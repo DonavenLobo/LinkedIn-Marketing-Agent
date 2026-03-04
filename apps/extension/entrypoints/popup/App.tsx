@@ -36,8 +36,8 @@ export default function App() {
     checkStatus();
   }, []);
 
-  const handleGetStarted = () => {
-    chrome.tabs.create({ url: `${API_URL}/auth/login?from=extension` });
+  const handleGetStarted = (provider: "linkedin_oidc" | "google") => {
+    chrome.tabs.create({ url: `${API_URL}/auth/login?from=extension&provider=${provider}` });
   };
 
   const handleOnboarding = () => {
@@ -58,9 +58,14 @@ export default function App() {
       <p className="popup-subtitle">AI-powered posts in your voice</p>
 
       {status === "logged-out" && (
-        <button className="btn-primary" onClick={handleGetStarted}>
-          Get Started
-        </button>
+        <div className="popup-stack">
+          <button className="btn-primary" onClick={() => handleGetStarted("linkedin_oidc")}>
+            Sign in with LinkedIn
+          </button>
+          <button className="btn-secondary" onClick={() => handleGetStarted("google")}>
+            Sign in with Google
+          </button>
+        </div>
       )}
 
       {status === "needs-onboarding" && (

@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { sendPostChatMessage, type ChatMessage } from "../../lib/api";
 
 const QUICK_IDEAS = [
@@ -6,6 +7,12 @@ const QUICK_IDEAS = [
   "Industry insight",
   "Lesson learned",
   "Hot take on market trends",
+];
+
+const PHASE_LABELS = [
+  "Analysing tone...",
+  "Structuring narrative...",
+  "Matching your cadence...",
 ];
 
 interface PostChatProps {
@@ -19,7 +26,20 @@ export function PostChat({ onReadyToGenerate, isGenerating }: PostChatProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [phaseIndex, setPhaseLabelIndex] = useState(0);
   const hasTriggeredRef = useRef(false);
+
+  // Cycle through phase labels while generating
+  useEffect(() => {
+    if (!isGenerating) {
+      setPhaseLabelIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setPhaseLabelIndex((i) => (i + 1) % PHASE_LABELS.length);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   async function sendMessage(userContent: string) {
     if (!userContent.trim() || isStreaming || isGenerating) return;
@@ -84,60 +104,114 @@ export function PostChat({ onReadyToGenerate, isGenerating }: PostChatProps) {
       {/* Message history */}
       {messages.length > 0 && (
         <div className="chat-messages">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`chat-bubble ${msg.role === "user" ? "chat-bubble--user" : "chat-bubble--assistant"}`}
-            >
-              {msg.content}
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {messages.map((msg, i) => (
+              <motion.div
+                key={`msg-${i}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className={`chat-bubble ${msg.role === "user" ? "chat-bubble--user" : "chat-bubble--assistant"}`}
+              >
+                {msg.content}
+              </motion.div>
+            ))}
 
-          {/* Live streaming bubble */}
-          {isStreaming && !streamingText && (
-            <div className="chat-bubble chat-bubble--assistant">
-              <div className="typing-dots">
-                <span /><span /><span />
-              </div>
-            </div>
-          )}
-          {isStreaming && streamingText && (
-            <div className="chat-bubble chat-bubble--assistant">
-              {streamingText}<span className="cursor-blink" />
-            </div>
-          )}
+            {/* Live streaming bubble */}
+            {isStreaming && !streamingText && (
+              <motion.div
+                key="typing"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="chat-bubble chat-bubble--assistant"
+              >
+                <div className="typing-dots">
+                  <span /><span /><span />
+                </div>
+              </motion.div>
+            )}
+            {isStreaming && streamingText && (
+              <motion.div
+                key="streaming"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="chat-bubble chat-bubble--assistant"
+              >
+                {streamingText}<span className="cursor-blink" />
+              </motion.div>
+            )}
 
-          {/* Generating indicator */}
-          {isGenerating && (
-            <div className="generating-indicator">
-              <div className="spinner" style={{ width: 14, height: 14 }} />
-              Writing your post...
-            </div>
-          )}
+            {/* Generating indicator — cycling phase labels */}
+            {isGenerating && (
+              <motion.div
+                key="generating"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="phase-label generating-indicator"
+              >
+                <div className="spinner" style={{ width: 14, height: 14 }} />
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={phaseIndex}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {PHASE_LABELS[phaseIndex]}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
       {/* Quick ideas chips */}
       {showQuickIdeas && (
-        <div className="quick-ideas">
-          <p className="quick-ideas-label">QUICK IDEAS</p>
+        <motion.div
+          className="quick-ideas"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <p className="quick-ideas-label font-mono">QUICK IDEAS</p>
           <div className="quick-ideas-chips">
-            {QUICK_IDEAS.map((idea) => (
-              <button
+            {QUICK_IDEAS.map((idea, i) => (
+              <motion.button
                 key={idea}
                 className="chip"
                 disabled={isStreaming || isGenerating}
                 onClick={() => sendMessage(idea)}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: 0.15 + i * 0.05 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {idea}
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Error */}
-      {error && <div className="error-msg">{error}</div>}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            className="error-msg"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input */}
       {!isGenerating && (

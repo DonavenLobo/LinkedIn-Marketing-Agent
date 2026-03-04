@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/layout/AuthShell";
 
@@ -9,6 +9,7 @@ type Provider = "google" | "linkedin_oidc";
 export default function LoginPage() {
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const autoTriggered = useRef(false);
 
   const handleOAuthLogin = async (provider: Provider) => {
     setLoadingProvider(provider);
@@ -37,6 +38,17 @@ export default function LoginPage() {
       setLoadingProvider(null);
     }
   };
+
+  // Auto-trigger OAuth if a provider param is specified (e.g. from extension)
+  useEffect(() => {
+    if (autoTriggered.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const provider = params.get("provider") as Provider | null;
+    if (provider && (provider === "google" || provider === "linkedin_oidc")) {
+      autoTriggered.current = true;
+      handleOAuthLogin(provider);
+    }
+  }, []);
 
   const isLoading = loadingProvider !== null;
 

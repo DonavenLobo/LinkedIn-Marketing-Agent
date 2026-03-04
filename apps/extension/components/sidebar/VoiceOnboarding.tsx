@@ -1,5 +1,6 @@
 import { useConversation } from "@elevenlabs/react";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "../../lib/api";
 
 interface TranscriptMessage {
@@ -17,6 +18,55 @@ type Phase = "idle" | "conversation" | "writing-samples" | "building" | "done";
 interface VoiceOnboardingProps {
   onComplete: () => void;
   onFallbackToWeb: () => void;
+}
+
+/** Multi-layered ring animation that emulates the web VoiceprintHologram */
+function VoicePulseRings({ isSpeaking }: { isSpeaking: boolean }) {
+  const rings = [0, 1, 2];
+  return (
+    <div style={{ position: "relative", width: 80, height: 80 }}>
+      {rings.map((i) => (
+        <motion.div
+          key={i}
+          className="voice-ring-layer"
+          style={{
+            inset: -8 * (i + 1),
+          }}
+          animate={
+            isSpeaking
+              ? {
+                  scale: [1, 1.08 + i * 0.04, 1],
+                  opacity: [0.4 - i * 0.1, 0.15 - i * 0.03, 0.4 - i * 0.1],
+                }
+              : { scale: 1, opacity: 0.12 }
+          }
+          transition={
+            isSpeaking
+              ? {
+                  duration: 1.6 + i * 0.3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }
+              : { duration: 0.4 }
+          }
+        />
+      ))}
+      <motion.div
+        className={`voice-pulse ${isSpeaking ? "speaking" : "listening"}`}
+        style={{ width: 80, height: 80 }}
+        animate={
+          isSpeaking
+            ? { scale: [1, 1.06, 1] }
+            : { scale: 1 }
+        }
+        transition={
+          isSpeaking
+            ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+            : { duration: 0.3 }
+        }
+      />
+    </div>
+  );
 }
 
 export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboardingProps) {
@@ -163,13 +213,23 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
   // -- Idle --
   if (phase === "idle") {
     return (
-      <div className="voice-onboarding">
+      <motion.div
+        className="voice-onboarding"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="voice-hero">
-          <div className="voice-icon-circle">
+          <motion.div
+            className="voice-icon-circle"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
             </svg>
-          </div>
+          </motion.div>
           <h2>Talk to your voice coach</h2>
           <p>Have a 3-5 min chat about your LinkedIn voice. Just talk naturally.</p>
         </div>
@@ -182,9 +242,15 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
 
         {error && <div className="error-msg">{error}</div>}
 
-        <button className="btn-primary" onClick={startConversation} style={{ width: "100%" }}>
+        <motion.button
+          className="btn-primary"
+          onClick={startConversation}
+          style={{ width: "100%" }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           Start Voice Chat
-        </button>
+        </motion.button>
 
         <button
           className="btn-new-post"
@@ -193,49 +259,81 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         >
           Prefer typing? Complete setup on web
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   // -- Conversation --
   if (phase === "conversation") {
     return (
-      <div className="voice-onboarding">
+      <motion.div
+        className="voice-onboarding"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="voice-visualizer">
-          <div className={`voice-pulse ${conversation.isSpeaking ? "speaking" : "listening"}`} />
-          <span className="voice-status">
-            {conversation.isSpeaking ? "Coach is speaking..." : "Listening to you..."}
-          </span>
+          <VoicePulseRings isSpeaking={conversation.isSpeaking} />
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={conversation.isSpeaking ? "speaking" : "listening"}
+              className="voice-status"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              {conversation.isSpeaking ? "Coach is speaking..." : "Listening to you..."}
+            </motion.span>
+          </AnimatePresence>
         </div>
 
         {transcript.length > 0 && (
           <div className="voice-transcript" ref={transcriptRef}>
-            {transcript.map((msg, i) => (
-              <div key={i} className={`voice-transcript-msg ${msg.role === "user" ? "user" : "assistant"}`}>
-                <span className="voice-transcript-role">{msg.role === "user" ? "You" : "Coach"}:</span>{" "}
-                {msg.content}
-              </div>
-            ))}
+            <AnimatePresence initial={false}>
+              {transcript.map((msg, i) => (
+                <motion.div
+                  key={`t-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`voice-transcript-msg ${msg.role === "user" ? "user" : "assistant"}`}
+                >
+                  <span className="voice-transcript-role">{msg.role === "user" ? "You" : "Coach"}:</span>{" "}
+                  {msg.content}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
 
         <button className="btn-secondary" onClick={stopConversation} style={{ width: "100%", marginTop: 12 }}>
           {transcript.length >= 6 ? "I'm done, build my profile" : "End conversation"}
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   // -- Writing samples --
   if (phase === "writing-samples") {
     return (
-      <div className="voice-onboarding">
+      <motion.div
+        className="voice-onboarding"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
         <div className="voice-hero">
-          <div className="voice-icon-circle voice-icon-success">
+          <motion.div
+            className="voice-icon-circle voice-icon-success"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </div>
+          </motion.div>
           <h2>Great conversation!</h2>
           <p>Paste any LinkedIn posts or writing to help us match your written style too.</p>
         </div>
@@ -250,38 +348,59 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           rows={5}
         />
 
-        <button className="btn-primary" onClick={handleBuildProfile} style={{ width: "100%" }}>
+        <motion.button
+          className="btn-primary"
+          onClick={handleBuildProfile}
+          style={{ width: "100%" }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           {writingSamples.trim() ? "Build My Profile" : "Skip & Build Profile"}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     );
   }
 
   // -- Building --
   if (phase === "building") {
     return (
-      <div className="voice-onboarding">
+      <motion.div
+        className="voice-onboarding"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="voice-hero">
           <div className="spinner" style={{ width: 24, height: 24 }} />
           <h2>Building your voice profile...</h2>
           <p>This usually takes 15-30 seconds.</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // -- Done --
   return (
-    <div className="voice-onboarding">
+    <motion.div
+      className="voice-onboarding"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <div className="voice-hero">
-        <div className="voice-icon-circle voice-icon-success">
+        <motion.div
+          className="voice-icon-circle voice-icon-success"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-        </div>
+        </motion.div>
         <h2>You&apos;re all set!</h2>
         <p>Your voice profile is ready. Start creating posts.</p>
       </div>
-    </div>
+    </motion.div>
   );
 }

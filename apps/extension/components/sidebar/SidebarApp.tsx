@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getTokens } from "../../lib/auth";
 import { streamGenerate, streamFeedback, approvePost, saveEdit, apiFetch } from "../../lib/api";
 import { API_URL } from "../../lib/config";
@@ -144,7 +145,7 @@ export function SidebarApp() {
       <div className="sidebar-header">
         <div>
           <h1>LinkedIn Agent</h1>
-          <p className="subtitle">AI-powered posts in your voice</p>
+          <p className="subtitle font-mono">AI-powered posts in your voice</p>
         </div>
         {status === "ready" && (
           <button
@@ -163,47 +164,74 @@ export function SidebarApp() {
         {showSettings && status === "ready" && (
           <SettingsPanel onClose={() => setShowSettings(false)} />
         )}
-        {status === "logged-out" && <AuthGate />}
 
-        {status === "needs-onboarding" && (
-          <VoiceOnboarding
-            onComplete={() => {
-              checkStatus();
-            }}
-            onFallbackToWeb={() => {
-              window.open(`${API_URL}/onboarding`, "_blank");
-            }}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {status === "logged-out" && (
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <AuthGate />
+            </motion.div>
+          )}
 
-        {status === "ready" && (
-          <>
-            <PostChat
-              key={chatKey}
-              onReadyToGenerate={handleGenerate}
-              isGenerating={isStreaming}
-            />
-            {error && <div className="error-msg">{error}</div>}
-            <PostPreview
-              content={content}
-              isStreaming={isStreaming}
-              isFeedbackStreaming={isFeedbackStreaming}
-              postId={postId}
-              topic={topic}
-              onApprove={handleApprove}
-              onFeedback={handleFeedback}
-              onEdit={handleEdit}
-              onNewPost={() => {
-                setContent("");
-                setPostId(null);
-                setTopic("");
-                setError(null);
-                setChatKey((k) => k + 1);
-                document.querySelector(".sidebar-content")?.scrollTo(0, 0);
-              }}
-            />
-          </>
-        )}
+          {status === "needs-onboarding" && (
+            <motion.div
+              key="onboarding"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <VoiceOnboarding
+                onComplete={() => {
+                  checkStatus();
+                }}
+                onFallbackToWeb={() => {
+                  window.open(`${API_URL}/onboarding`, "_blank");
+                }}
+              />
+            </motion.div>
+          )}
+
+          {status === "ready" && (
+            <motion.div
+              key="main"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <PostChat
+                key={chatKey}
+                onReadyToGenerate={handleGenerate}
+                isGenerating={isStreaming}
+              />
+              {error && <div className="error-msg">{error}</div>}
+              <PostPreview
+                content={content}
+                isStreaming={isStreaming}
+                isFeedbackStreaming={isFeedbackStreaming}
+                postId={postId}
+                topic={topic}
+                onApprove={handleApprove}
+                onFeedback={handleFeedback}
+                onEdit={handleEdit}
+                onNewPost={() => {
+                  setContent("");
+                  setPostId(null);
+                  setTopic("");
+                  setError(null);
+                  setChatKey((k) => k + 1);
+                  document.querySelector(".sidebar-content")?.scrollTo(0, 0);
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

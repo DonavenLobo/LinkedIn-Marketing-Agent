@@ -12,10 +12,10 @@ export default defineContentScript({
       position: "overlay",
       zIndex: 2147483647,
       onMount: (container, shadow) => {
-        // Load DM Sans font into Shadow DOM (can't use @import in inlined CSS)
+        // Load DM Sans + DM Mono fonts into Shadow DOM (can't use @import in inlined CSS)
         const fontLink = document.createElement("link");
         fontLink.rel = "stylesheet";
-        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap";
+        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap";
         shadow.appendChild(fontLink);
 
         // Inject hand-written CSS into Shadow DOM

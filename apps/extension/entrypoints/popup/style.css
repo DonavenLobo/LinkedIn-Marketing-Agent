@@ -13,6 +13,11 @@
     --success: #057a55;
     --error: #e02424;
     --font-body: 'DM Sans', system-ui, sans-serif;
+
+    /* Glassmorphism */
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --ring: var(--accent-light);
 }
 
 body {

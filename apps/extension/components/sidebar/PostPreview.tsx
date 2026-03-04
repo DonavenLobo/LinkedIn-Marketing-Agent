@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { generateHashtags } from "../../lib/api";
 
 type Mode = "preview" | "feedback" | "editing";
@@ -116,7 +117,12 @@ export function PostPreview({
 
   return (
     <>
-      <div className="post-preview">
+      <motion.div
+        className="post-preview glass-panel"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+      >
         <div className="post-preview-header">
           <div className="avatar">Y</div>
           <div className="post-meta">
@@ -143,167 +149,190 @@ export function PostPreview({
           )}
         </div>
         <div className="post-preview-engagement">
-          <span>👍❤️ 42</span>
-          <span>12 comments · 5 reposts</span>
+          <span>42</span>
+          <span>12 comments</span>
         </div>
-      </div>
+      </motion.div>
 
-      {content && !isStreaming && (
-        <div className="post-actions-area">
-          {mode === "feedback" && (
-            <div className="feedback-area">
-              <textarea
-                className="feedback-textarea"
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="What would you change? e.g. 'Make it shorter' or 'Less formal'"
-                rows={3}
-                disabled={isFeedbackStreaming}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleSendFeedback();
-                  }
-                }}
-              />
-              <div className="btn-row">
+      <AnimatePresence>
+        {content && !isStreaming && (
+          <motion.div
+            className="post-actions-area"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, delay: 0.1 }}
+          >
+            {mode === "feedback" && (
+              <div className="feedback-area">
+                <textarea
+                  className="feedback-textarea"
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="What would you change? e.g. 'Make it shorter' or 'Less formal'"
+                  rows={3}
+                  disabled={isFeedbackStreaming}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      handleSendFeedback();
+                    }
+                  }}
+                />
+                <div className="btn-row">
+                  <button
+                    className="btn-primary"
+                    onClick={handleSendFeedback}
+                    disabled={isFeedbackStreaming || !feedbackText.trim() || !postId}
+                  >
+                    {isFeedbackStreaming ? "Rewriting..." : "Send"}
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => { setMode("preview"); setFeedbackText(""); }}
+                    disabled={isFeedbackStreaming}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="hint-text">Tip: Cmd+Enter to send</p>
+              </div>
+            )}
+
+            {mode === "editing" && (
+              <div className="btn-row" style={{ marginTop: 8 }}>
                 <button
                   className="btn-primary"
-                  onClick={handleSendFeedback}
-                  disabled={isFeedbackStreaming || !feedbackText.trim() || !postId}
+                  onClick={handleSaveEdit}
+                  disabled={!editText.trim()}
                 >
-                  {isFeedbackStreaming ? "Rewriting…" : "Send"}
+                  Save Edit
                 </button>
                 <button
                   className="btn-secondary"
-                  onClick={() => { setMode("preview"); setFeedbackText(""); }}
-                  disabled={isFeedbackStreaming}
+                  onClick={() => setMode("preview")}
                 >
                   Cancel
                 </button>
               </div>
-              <p className="hint-text">Tip: ⌘+Enter to send</p>
-            </div>
-          )}
-
-          {mode === "editing" && (
-            <div className="btn-row" style={{ marginTop: 8 }}>
-              <button
-                className="btn-primary"
-                onClick={handleSaveEdit}
-                disabled={!editText.trim()}
-              >
-                Save Edit
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setMode("preview")}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {mode === "preview" && (
-            <>
-              <div className="post-actions">
-                <button
-                  className="btn-approve"
-                  onClick={handleApprove}
-                  disabled={approved || !postId}
-                >
-                  {approved ? "Approved ✓" : "Approve"}
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => { setMode("feedback"); setFeedbackText(""); setApproved(false); }}
-                  disabled={!postId}
-                >
-                  Feedback
-                </button>
-              </div>
-              <div className="post-actions" style={{ marginTop: 6 }}>
-                <button
-                  className="btn-secondary"
-                  onClick={handleStartEdit}
-                >
-                  Edit Post
-                </button>
-                <button className="btn-primary" onClick={handleCopy}>
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-              <button
-                className="btn-insert-linkedin"
-                onClick={handleInsertToLinkedIn}
-                disabled={inserted}
-              >
-                {inserted ? "Inserted ✓" : "Insert to LinkedIn"}
-              </button>
-              <button className="btn-new-post" onClick={handleNewPost}>
-                New Post
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {(approved || hashtagsLoading) && !isStreaming && (
-        <div className="hashtag-suggestions">
-          <div className="hashtag-suggestions-header">
-            <span className="hashtag-suggestions-label">SUGGESTED HASHTAGS</span>
-            {!hashtagsLoading && hashtags.length > 0 && (
-              <button
-                className="copy-all-btn"
-                onClick={() => navigator.clipboard.writeText(hashtags.join(" "))}
-              >
-                Copy all
-              </button>
             )}
-          </div>
-          {hashtagsLoading ? (
-            <div className="hashtag-skeleton">
-              <div className="skeleton-pill" />
-              <div className="skeleton-pill" />
-              <div className="skeleton-pill" />
-            </div>
-          ) : (
-            <div className="hashtag-chips">
-              {hashtags.map((tag) => (
-                <button
-                  key={tag}
-                  className="hashtag-chip"
-                  onClick={() => navigator.clipboard.writeText(tag)}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
 
-          {/* Media engagement tip */}
-          <div className="media-tip">
-            <span className="media-tip-label">MEDIA TIP</span>
-            <div className="media-tip-list">
-              <div className="media-tip-item">
-                <span className="media-dot media-dot--best" />
-                <span><strong>Video</strong> — highest engagement</span>
+            {mode === "preview" && (
+              <>
+                <div className="post-actions">
+                  <motion.button
+                    className="btn-approve"
+                    onClick={handleApprove}
+                    disabled={approved || !postId}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {approved ? "Approved" : "Approve"}
+                  </motion.button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => { setMode("feedback"); setFeedbackText(""); setApproved(false); }}
+                    disabled={!postId}
+                  >
+                    Feedback
+                  </button>
+                </div>
+                <div className="post-actions" style={{ marginTop: 6 }}>
+                  <button
+                    className="btn-secondary"
+                    onClick={handleStartEdit}
+                  >
+                    Edit Post
+                  </button>
+                  <button className="btn-primary" onClick={handleCopy}>
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+                <motion.button
+                  className="btn-insert-linkedin"
+                  onClick={handleInsertToLinkedIn}
+                  disabled={inserted}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {inserted ? "Inserted" : "Insert to LinkedIn"}
+                </motion.button>
+                <button className="btn-new-post" onClick={handleNewPost}>
+                  New Post
+                </button>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {(approved || hashtagsLoading) && !isStreaming && (
+          <motion.div
+            className="hashtag-suggestions"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="hashtag-suggestions-header">
+              <span className="hashtag-suggestions-label font-mono">SUGGESTED HASHTAGS</span>
+              {!hashtagsLoading && hashtags.length > 0 && (
+                <button
+                  className="copy-all-btn"
+                  onClick={() => navigator.clipboard.writeText(hashtags.join(" "))}
+                >
+                  Copy all
+                </button>
+              )}
+            </div>
+            {hashtagsLoading ? (
+              <div className="hashtag-skeleton">
+                <div className="skeleton-pill" />
+                <div className="skeleton-pill" />
+                <div className="skeleton-pill" />
               </div>
-              <div className="media-tip-item">
-                <span className="media-dot media-dot--great" />
-                <span><strong>Carousel</strong> — strong reach</span>
+            ) : (
+              <div className="hashtag-chips">
+                {hashtags.map((tag, i) => (
+                  <motion.button
+                    key={tag}
+                    className="hashtag-chip"
+                    onClick={() => navigator.clipboard.writeText(tag)}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2, delay: i * 0.04 }}
+                  >
+                    {tag}
+                  </motion.button>
+                ))}
               </div>
-              <div className="media-tip-item">
-                <span className="media-dot media-dot--good" />
-                <span><strong>Single image</strong> — solid boost</span>
-              </div>
-              <div className="media-tip-item">
-                <span className="media-dot media-dot--low" />
-                <span><strong>Text only</strong> — least reach</span>
+            )}
+
+            {/* Media engagement tip */}
+            <div className="media-tip">
+              <span className="media-tip-label font-mono">MEDIA TIP</span>
+              <div className="media-tip-list">
+                <div className="media-tip-item">
+                  <span className="media-dot media-dot--best" />
+                  <span><strong>Video</strong> — highest engagement</span>
+                </div>
+                <div className="media-tip-item">
+                  <span className="media-dot media-dot--great" />
+                  <span><strong>Carousel</strong> — strong reach</span>
+                </div>
+                <div className="media-tip-item">
+                  <span className="media-dot media-dot--good" />
+                  <span><strong>Single image</strong> — solid boost</span>
+                </div>
+                <div className="media-tip-item">
+                  <span className="media-dot media-dot--low" />
+                  <span><strong>Text only</strong> — least reach</span>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
