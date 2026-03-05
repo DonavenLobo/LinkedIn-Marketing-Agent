@@ -646,6 +646,25 @@
   cursor: not-allowed;
 }
 
+.insert-linkedin-area {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.insert-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.insert-error {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #dc2626;
+  line-height: 1.4;
+}
+
 /* Voice onboarding */
 .voice-onboarding {
   padding: 8px 0;
