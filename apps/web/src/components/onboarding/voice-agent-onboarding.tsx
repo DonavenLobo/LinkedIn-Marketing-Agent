@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useConversation } from "@elevenlabs/react";
+import { Conversation } from "@elevenlabs/client";
 import {
   AgentMode,
   HopeVoiceStateRing,
@@ -32,12 +32,17 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
   const [showSilenceHint, setShowSilenceHint] = useState(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const retryCountRef = useRef(0);
+  const intentionalDisconnectRef = useRef(false);
+  const toolFiredRef = useRef(false);
   const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastMessageTimeRef = useRef<number>(0);
   const sessionRef = useRef<OnboardingSession | null>(null);
   const transcriptRef = useRef<TranscriptMessage[]>([]);
+  // Stores the active Conversation instance so callbacks can call endSession()
+  const conversationRef = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null);
+  // Stable ref to startConversation so onDisconnect retry doesn't capture a stale closure
+  const startConversationRef = useRef<(isRetry?: boolean) => Promise<void>>(async () => {});
 
   // Keep refs in sync so callbacks don't capture stale state
   useEffect(() => { sessionRef.current = session; }, [session]);
@@ -103,7 +108,7 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
   }, [isRedo, router]);
 
   const startConversation = useCallback(async (isRetry = false) => {
-    if (status === "connecting" || status === "connected") return;
+    if (!isRetry && (status === "connecting" || status === "connected")) return;
 
     try {
       setError(null);
@@ -135,7 +140,7 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
       }
       const { signedUrl } = (await res.json()) as { signedUrl: string };
 
-      // Optionally update session mode to voice
+      // Update session mode to voice
       if (sessionRef.current) {
         fetch("/api/onboarding/session", {
           method: "PATCH",
@@ -144,138 +149,145 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
         }).catch(() => {});
       }
 
-      const overrides: Record<string, unknown> = {};
-      const agentOverride: Record<string, unknown> = {};
+      // Build LinkedIn context as a single dynamic variable for the agent system prompt
+      const hasLinkedIn = !!(linkedInData?.headline || linkedInData?.positions?.length);
+      const title = linkedInData?.positions?.[0]?.title ?? linkedInData?.headline ?? "";
+      const company = linkedInData?.positions?.[0]?.company ?? "";
 
-      if (linkedInData?.headline || linkedInData?.positions?.[0]) {
-        const title = linkedInData.positions?.[0]?.title || linkedInData.headline;
-        const company = linkedInData.positions?.[0]?.company || "";
-        const industry = linkedInData.industry ? ` (${linkedInData.industry})` : "";
-        const skills = linkedInData.skills?.length
-          ? `\nSkills: ${linkedInData.skills.slice(0, 6).join(", ")}`
-          : "";
-        const positions = linkedInData.positions?.length
-          ? linkedInData.positions
-              .slice(0, 3)
-              .map((p) => `- ${p.title} at ${p.company}`)
-              .join("\n")
-          : "";
-
-        // Inject LinkedIn context into the agent's prompt so it has this info throughout
-        agentOverride.prompt = {
-          prompt: `## LINKEDIN CONTEXT (pre-imported — do not ask about these)
-Name: ${linkedInData.firstName ?? ""} ${linkedInData.lastName ?? ""}
-Headline: ${linkedInData.headline ?? ""}${industry}${positions ? `\nPositions:\n${positions}` : ""}${skills}
-
-You already know their professional background. SKIP all questions about what they do or their industry. Jump straight to voice calibration — ask about a specific story, win, or opinion. Target 3-4 exchanges total, then call ready_to_build_profile.`,
-        };
-
-        agentOverride.firstMessage = `Hey${linkedInData.firstName ? ` ${linkedInData.firstName}` : ""}! I can see you're a ${title}${company ? ` at ${company}` : ""}. I already know the background — I just need to hear how you actually talk. Tell me about a deal, project, or decision you're proud of, like you'd explain it to a friend.`;
-      } else if (isRetry && isResuming) {
-        agentOverride.firstMessage = `Welcome back! Let's pick up where we left off.`;
+      let userContext = "";
+      if (hasLinkedIn) {
+        const parts = [
+          "You already know the following about this person. SKIP background and professional context questions — jump straight to voice calibration. Target 3-4 exchanges total.",
+        ];
+        if (linkedInData?.firstName) parts.push(`Name: ${linkedInData.firstName}${linkedInData?.lastName ? ` ${linkedInData.lastName}` : ""}`);
+        if (title) parts.push(`Current role: ${title}${company ? ` at ${company}` : ""}`);
+        if (linkedInData?.headline) parts.push(`Headline: ${linkedInData.headline}`);
+        if (linkedInData?.industry) parts.push(`Industry: ${linkedInData.industry}`);
+        if (linkedInData?.skills?.length) parts.push(`Skills: ${linkedInData.skills.slice(0, 8).join(", ")}`);
+        userContext = parts.join("\n");
       }
 
-      if (Object.keys(agentOverride).length > 0) {
-        overrides.agent = agentOverride;
-      }
+      console.log("[Hope] Starting session, userContext:", userContext.slice(0, 100));
 
-      await conversation.startSession({
+      conversationRef.current = await Conversation.startSession({
         signedUrl,
-        ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
-      } as Parameters<typeof conversation.startSession>[0]);
+        dynamicVariables: { user_context: userContext },
 
-      retryCountRef.current = 0;
+        onConnect: ({ conversationId }) => {
+          console.log("[Hope] Connected, conversationId:", conversationId);
+          if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+          setStatus("connected");
+          setError(null);
+          resetSilenceTimer();
+        },
+
+        onDisconnect: (details) => {
+          console.warn("[Hope] Disconnected:", JSON.stringify(details));
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+          setAgentMode("idle");
+
+          if (intentionalDisconnectRef.current) {
+            intentionalDisconnectRef.current = false;
+            return;
+          }
+
+          const hasConversationStarted = transcriptRef.current.length > 0;
+
+          if (hasConversationStarted && retryCountRef.current < MAX_RETRIES) {
+            retryCountRef.current += 1;
+            setError(`Connection dropped. Reconnecting… (${retryCountRef.current}/${MAX_RETRIES})`);
+            setTimeout(() => startConversationRef.current(true), RETRY_DELAY_MS);
+          } else {
+            setStatus("error");
+            const detailMsg = details.reason === "error" ? ` (${details.message})` : "";
+            setError(
+              hasConversationStarted
+                ? `Voice connection lost${detailMsg}. You can switch to text chat to continue.`
+                : `Could not connect to the voice agent${detailMsg}. Please try again.`
+            );
+          }
+        },
+
+        onMessage: (message) => {
+          console.log("[Hope] Message:", message.source, message.message.slice(0, 80));
+          const role = message.source === "user" ? "user" : "assistant";
+          const newMsg: TranscriptMessage = { role, content: message.message };
+          retryCountRef.current = 0;
+          setTranscript((prev) => {
+            const updated = [...prev, newMsg];
+            const turnCount = updated.filter((m) => m.role === "user").length;
+            schedulePatch(updated, turnCount);
+            resetSilenceTimer();
+            return updated;
+          });
+        },
+
+        onError: (message, context) => {
+          console.error("[Hope] Error:", message, context);
+          if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+          setError(`Voice connection error: ${message}`);
+          setStatus("error");
+          setAgentMode("idle");
+        },
+
+        onModeChange: ({ mode }) => {
+          if (mode === "speaking" || mode === "listening") {
+            setAgentMode(mode as AgentMode);
+          } else {
+            setAgentMode("idle");
+          }
+        },
+
+        clientTools: {
+          ready_to_build_profile: async (params: Record<string, unknown>) => {
+            toolFiredRef.current = true;
+            const toolData: ProfileToolData = {
+              summary: (params.summary as string) || "Voice onboarding conversation",
+              confidence: (params.confidence as "high" | "medium" | "low") || "medium",
+            };
+            const s = sessionRef.current;
+            if (s) {
+              try {
+                await fetch("/api/onboarding/session", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    sessionId: s.id,
+                    tool_data: toolData,
+                    transcript: transcriptRef.current,
+                    turn_count: transcriptRef.current.filter((m) => m.role === "user").length,
+                  }),
+                });
+              } catch {
+                // Non-fatal — proceed to posts step anyway
+              }
+            }
+            intentionalDisconnectRef.current = true;
+            try { await conversationRef.current?.endSession(); } catch { /* ignore */ }
+            goToPostsStep();
+            return "Profile build triggered.";
+          },
+        },
+      });
+
+      console.log("[Hope] startSession resolved successfully");
       if (!isRetry) resetSilenceTimer();
     } catch (err) {
       if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
-      console.error("Failed to start Hope conversation", err);
+      console.error("[Hope] startSession threw:", err);
       setError(
         err instanceof Error ? err.message : "Could not start voice session. Please try again.",
       );
       setStatus("error");
       setAgentMode("idle");
     }
-  }, [status, linkedInData, isResuming, resetSilenceTimer]); // conversation added after definition
+  }, [status, linkedInData, resetSilenceTimer, schedulePatch, goToPostsStep]);
 
-  const conversation = useConversation({
-    onConnect: () => {
-      if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
-      setStatus("connected");
-      setError(null);
-      resetSilenceTimer();
-    },
-    onDisconnect: () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      setAgentMode("idle");
-      // Auto-reconnect if unexpected disconnect (not triggered by us)
-      if (retryCountRef.current < MAX_RETRIES) {
-        retryCountRef.current += 1;
-        setStatus("connecting");
-        setError(`Reconnecting… (attempt ${retryCountRef.current}/${MAX_RETRIES})`);
-        setTimeout(() => startConversation(true), RETRY_DELAY_MS);
-      } else {
-        setStatus("ended");
-        setError("Voice connection lost. You can switch to text chat to continue.");
-      }
-    },
-    onMessage: (message) => {
-      const role = message.source === "user" ? "user" : "assistant";
-      const newMsg: TranscriptMessage = { role, content: message.message };
-      setTranscript((prev) => {
-        const updated = [...prev, newMsg];
-        const turnCount = updated.filter((m) => m.role === "user").length;
-        schedulePatch(updated, turnCount);
-        lastMessageTimeRef.current = Date.now();
-        resetSilenceTimer();
-        return updated;
-      });
-    },
-    onError: (err) => {
-      console.error("ElevenLabs error:", err);
-      if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
-      setError("Voice connection error. Please try again or switch to text.");
-      setStatus("error");
-      setAgentMode("idle");
-    },
-    onModeChange: (mode) => {
-      const m = typeof mode === "string" ? mode : (mode as { mode: string })?.mode;
-      if (m === "speaking" || m === "listening") {
-        setAgentMode(m as AgentMode);
-      } else {
-        setAgentMode("idle");
-      }
-    },
-    clientTools: {
-      ready_to_build_profile: async (params: Record<string, unknown>) => {
-        toolFiredRef.current = true;
-        const toolData: ProfileToolData = {
-          summary: (params.summary as string) || "Voice onboarding conversation",
-          confidence: (params.confidence as "high" | "medium" | "low") || "medium",
-        };
-        // Save tool_data to session then navigate
-        const s = sessionRef.current;
-        if (s) {
-          try {
-            await fetch("/api/onboarding/session", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                sessionId: s.id,
-                tool_data: toolData,
-                transcript: transcriptRef.current,
-                turn_count: transcriptRef.current.filter((m) => m.role === "user").length,
-              }),
-            });
-          } catch {
-            // Non-fatal — proceed to posts step anyway
-          }
-        }
-        try { await conversation.endSession(); } catch { /* ignore */ }
-        goToPostsStep();
-        return "Profile build triggered.";
-      },
-    },
-  });
+  // Keep ref in sync so onDisconnect retry always calls the latest version
+  useEffect(() => {
+    startConversationRef.current = startConversation;
+  }, [startConversation]);
 
   // Scroll transcript on new messages
   useEffect(() => {
@@ -283,7 +295,6 @@ You already know their professional background. SKIP all questions about what th
   }, [transcript]);
 
   const handleEnd = async () => {
-    // Flush pending patch
     if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
     if (sessionRef.current && transcript.length > 0) {
       await fetch("/api/onboarding/session", {
@@ -297,7 +308,8 @@ You already know their professional background. SKIP all questions about what th
         }),
       }).catch(() => {});
     }
-    try { await conversation.endSession(); } catch { /* ignore */ }
+    intentionalDisconnectRef.current = true;
+    try { await conversationRef.current?.endSession(); } catch { /* ignore */ }
     setStatus("ended");
     setAgentMode("idle");
     goToPostsStep();
@@ -318,7 +330,6 @@ You already know their professional background. SKIP all questions about what th
     setShowResumeBanner(false);
     setStatus("idle");
     setError(null);
-    // Create a fresh session
     fetch("/api/onboarding/session")
       .then((r) => r.json())
       .then((data: { session: OnboardingSession }) => setSession(data.session))
@@ -326,7 +337,6 @@ You already know their professional background. SKIP all questions about what th
   };
 
   // Auto-trigger: if user has spoken 8 times and tool still hasn't fired, end and proceed
-  const toolFiredRef = useRef(false);
   useEffect(() => {
     const userTurns = transcript.filter((m) => m.role === "user").length;
     if (userTurns >= 8 && !toolFiredRef.current && status === "connected") {
@@ -339,7 +349,6 @@ You already know their professional background. SKIP all questions about what th
   const isConnecting = status === "connecting";
   const isActive = isConnected || isConnecting;
   const turnCount = transcript.filter((m) => m.role === "user").length;
-  // Show a prominent "build" CTA after 5 user turns in case the agent doesn't call the tool
   const showBuildButton = isConnected && turnCount >= 5 && !toolFiredRef.current;
 
   return (
@@ -357,7 +366,6 @@ You already know their professional background. SKIP all questions about what th
         </p>
       </header>
 
-      {/* Resume banner */}
       {showResumeBanner && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <span>Resuming previous session ({transcript.length} messages)</span>
@@ -389,7 +397,6 @@ You already know their professional background. SKIP all questions about what th
           </div>
         </div>
 
-        {/* Progress indicator */}
         {turnCount > 0 && (
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1 rounded-full bg-surface-muted overflow-hidden">
@@ -453,7 +460,6 @@ You already know their professional background. SKIP all questions about what th
           </span>
         </div>
 
-        {/* Fallback build CTA — appears after 5 user turns if agent hasn't ended the session */}
         {showBuildButton && (
           <div className="rounded-xl border border-accent/30 bg-accent-light px-4 py-3 flex items-center justify-between gap-4">
             <p className="text-xs text-ink">
@@ -469,7 +475,6 @@ You already know their professional background. SKIP all questions about what th
           </div>
         )}
 
-        {/* Switch to text — always visible */}
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <button
             type="button"
@@ -482,7 +487,6 @@ You already know their professional background. SKIP all questions about what th
             <button
               type="button"
               onClick={async () => {
-                // Save & continue later
                 if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
                 const s = sessionRef.current;
                 if (s && transcript.length > 0) {
@@ -496,7 +500,8 @@ You already know their professional background. SKIP all questions about what th
                     }),
                   }).catch(() => {});
                 }
-                try { await conversation.endSession(); } catch { /* ignore */ }
+                intentionalDisconnectRef.current = true;
+                try { await conversationRef.current?.endSession(); } catch { /* ignore */ }
                 router.push("/create");
               }}
               className="text-xs text-ink-muted underline underline-offset-2 hover:text-ink"
@@ -507,7 +512,6 @@ You already know their professional background. SKIP all questions about what th
         </div>
       </section>
 
-      {/* Live transcript */}
       {transcript.length > 0 && (
         <section className="mt-4 rounded-xl border border-border bg-surface p-4 space-y-2 max-h-72 overflow-y-auto">
           <p className="text-[11px] font-medium uppercase tracking-wider text-ink-muted mb-2">Conversation</p>
