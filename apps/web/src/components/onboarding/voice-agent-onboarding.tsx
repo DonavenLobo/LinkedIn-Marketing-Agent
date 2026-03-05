@@ -167,11 +167,14 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
         userContext = parts.join("\n");
       }
 
-      console.log("[Hope] Starting session, userContext:", userContext.slice(0, 100));
-
-      conversationRef.current = await Conversation.startSession({
+      const sessionOptions = {
         signedUrl,
         dynamicVariables: { user_context: userContext },
+      };
+      console.log("[Hope] Starting session, full dynamicVariables:", JSON.stringify(sessionOptions.dynamicVariables));
+
+      conversationRef.current = await Conversation.startSession({
+        ...sessionOptions,
 
         onConnect: ({ conversationId }) => {
           console.log("[Hope] Connected, conversationId:", conversationId);
@@ -237,6 +240,10 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
           } else {
             setAgentMode("idle");
           }
+        },
+
+        onConversationMetadata: (metadata) => {
+          console.log("[Hope] Conversation metadata:", JSON.stringify(metadata, null, 2));
         },
 
         clientTools: {
