@@ -665,6 +665,42 @@
   line-height: 1.4;
 }
 
+/* Onboarding redirect */
+.onboarding-redirect {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.onboarding-redirect-icon {
+  margin: 0 auto 16px;
+  color: var(--accent);
+}
+
+.onboarding-redirect-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.onboarding-redirect-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.onboarding-redirect-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.onboarding-redirect-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
 /* Voice onboarding */
 .voice-onboarding {
   padding: 8px 0;

@@ -7,7 +7,6 @@ import { AuthGate } from "./AuthGate";
 import { PostChat } from "./PostChat";
 import { PostPreview } from "./PostPreview";
 import { SettingsPanel } from "./SettingsPanel";
-import { VoiceOnboarding } from "./VoiceOnboarding";
 import { TourOverlay } from "./TourOverlay";
 import {
   SIDEBAR_TOUR_STEPS,
@@ -244,14 +243,30 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <VoiceOnboarding
-                onComplete={() => {
-                  checkStatus();
-                }}
-                onFallbackToWeb={() => {
-                  window.open(`${API_URL}/onboarding`, "_blank");
-                }}
-              />
+              <div className="onboarding-redirect">
+                <div className="onboarding-redirect-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3a9 9 0 1 0 9 9" />
+                    <path d="M12 7v5l3 3" />
+                    <path d="M17 3h4v4" />
+                    <path d="M21 3l-5 5" />
+                  </svg>
+                </div>
+                <h2 className="onboarding-redirect-title">Set up your voice profile</h2>
+                <p className="onboarding-redirect-desc">
+                  Complete a quick onboarding on the web — upload your LinkedIn data and have a short
+                  conversation so we can learn how you write. Takes about 3 minutes.
+                </p>
+                <button
+                  className="btn-primary onboarding-redirect-btn"
+                  onClick={() => window.open(`${API_URL}/onboarding`, "_blank")}
+                >
+                  Open onboarding →
+                </button>
+                <p className="onboarding-redirect-hint">
+                  This page will update automatically once you're done.
+                </p>
+              </div>
             </motion.div>
           )}
 
