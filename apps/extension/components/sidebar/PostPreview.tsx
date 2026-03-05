@@ -35,6 +35,7 @@ export function PostPreview({
   const [feedbackText, setFeedbackText] = useState("");
   const [editText, setEditText] = useState("");
   const [inserted, setInserted] = useState(false);
+  const [insertError, setInsertError] = useState<string | null>(null);
   const originalTextRef = useRef("");
 
   if (!content && !isStreaming) return null;
@@ -88,30 +89,21 @@ export function PostPreview({
   };
 
   const handleInsertToLinkedIn = () => {
+    const fullText = hashtags.length > 0
+      ? content + "\n\n" + hashtags.join(" ")
+      : content;
+    const htmlContent = `<p>${fullText.replace(/\n/g, "</p><p>")}</p>`;
+
     const postBox = document.querySelector<HTMLDivElement>(
       ".ql-editor[data-placeholder]"
     );
     if (postBox) {
-      postBox.innerHTML = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+      postBox.innerHTML = htmlContent;
       postBox.dispatchEvent(new Event("input", { bubbles: true }));
       setInserted(true);
     } else {
-      const btn = document.querySelector<HTMLButtonElement>(
-        "button.share-box-feed-entry__trigger"
-      );
-      if (btn) {
-        btn.click();
-        setTimeout(() => {
-          const editor = document.querySelector<HTMLDivElement>(
-            ".ql-editor[data-placeholder]"
-          );
-          if (editor) {
-            editor.innerHTML = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
-            editor.dispatchEvent(new Event("input", { bubbles: true }));
-            setInserted(true);
-          }
-        }, 600);
-      }
+      setInsertError("Open a new post on LinkedIn first, then try again.");
+      setTimeout(() => setInsertError(null), 4000);
     }
   };
 
@@ -266,15 +258,6 @@ export function PostPreview({
                     {copied ? "Copied!" : "Copy"}
                   </button>
                 </div>
-                <motion.button
-                  className="btn-insert-linkedin"
-                  onClick={handleInsertToLinkedIn}
-                  disabled={inserted}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {inserted ? "Inserted" : "Insert to LinkedIn"}
-                </motion.button>
                 <button className="btn-new-post" onClick={handleNewPost}>
                   New Post
                 </button>
@@ -349,6 +332,36 @@ export function PostPreview({
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {approved && !hashtagsLoading && hashtags.length > 0 && !isStreaming && (
+          <motion.div
+            className="insert-linkedin-area"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, delay: 0.15 }}
+          >
+            <motion.button
+              className="btn-insert-linkedin"
+              onClick={handleInsertToLinkedIn}
+              disabled={inserted}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {inserted ? "Inserted!" : "Insert to LinkedIn"}
+            </motion.button>
+            <p className="insert-hint">
+              {inserted
+                ? "Post and hashtags pasted into LinkedIn."
+                : "Open a new post on LinkedIn first, then click to paste."}
+            </p>
+            {insertError && (
+              <p className="insert-error">{insertError}</p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
