@@ -13,12 +13,23 @@ interface ProfileToolData {
   confidence: "high" | "medium" | "low";
 }
 
+interface OnboardingSession {
+  id: string;
+  transcript: TranscriptMessage[];
+  turn_count: number;
+  mode: string;
+}
+
 type Phase = "idle" | "conversation" | "writing-samples" | "building" | "done";
 
 interface VoiceOnboardingProps {
   onComplete: () => void;
   onFallbackToWeb: () => void;
 }
+
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 2000;
+const PATCH_DEBOUNCE_MS = 3000;
 
 /** Multi-layered ring animation that emulates the web VoiceprintHologram */
 function VoicePulseRings({ isSpeaking }: { isSpeaking: boolean }) {
@@ -77,8 +88,18 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
   const [error, setError] = useState<string | null>(null);
   const [micError, setMicError] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [session, setSession] = useState<OnboardingSession | null>(null);
+  const [isResuming, setIsResuming] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const retryCountRef = useRef(0);
+  const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef<OnboardingSession | null>(null);
+  const transcriptStateRef = useRef<TranscriptMessage[]>([]);
 
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { transcriptStateRef.current = transcript; }, [transcript]);
+
+  // Fetch user id and load/create session on mount
   useEffect(() => {
     apiFetch("/api/me").then(async (res) => {
       if (res.ok) {
@@ -86,6 +107,34 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         setUserId(data.user?.id || null);
       }
     }).catch(() => {});
+
+    apiFetch("/api/onboarding/session").then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setSession(data.session);
+        if (data.isResuming && data.session.transcript?.length > 0) {
+          setTranscript(data.session.transcript);
+          setIsResuming(true);
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
+  const schedulePatch = useCallback((updatedTranscript: TranscriptMessage[], turnCount: number) => {
+    if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
+    patchTimerRef.current = setTimeout(() => {
+      const s = sessionRef.current;
+      if (!s) return;
+      apiFetch("/api/onboarding/session", {
+        method: "PATCH",
+        body: JSON.stringify({
+          sessionId: s.id,
+          transcript: updatedTranscript,
+          turn_count: turnCount,
+          mode: "voice",
+        }),
+      }).catch(() => {});
+    }, PATCH_DEBOUNCE_MS);
   }, []);
 
   const conversation = useConversation({
@@ -96,16 +145,28 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
     onConnect: () => {
       setPhase("conversation");
       setError(null);
+      retryCountRef.current = 0;
     },
     onDisconnect: () => {
       if (phase === "conversation" && !toolData) {
-        setPhase("idle");
+        // Auto-reconnect on unexpected disconnect
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current += 1;
+          setError(`Connection lost. Reconnecting… (${retryCountRef.current}/${MAX_RETRIES})`);
+          setTimeout(() => startConversation(true), RETRY_DELAY_MS);
+        } else {
+          setPhase("idle");
+          setError("Connection lost. Continue on web to preserve your progress.");
+        }
       }
     },
     onMessage: (message) => {
       setTranscript((prev) => {
         const role = message.source === "user" ? "user" : "assistant";
-        return [...prev, { role, content: message.message }];
+        const updated = [...prev, { role, content: message.message }];
+        const turnCount = updated.filter((m) => m.role === "user").length;
+        schedulePatch(updated, turnCount);
+        return updated;
       });
     },
     onError: (err) => {
@@ -120,12 +181,22 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           confidence: (params.confidence as "high" | "medium" | "low") || "medium",
         };
         setToolData(data);
-        setPhase("writing-samples");
-        try {
-          await conversation.endSession();
-        } catch {
-          // Session may already be ending
+        // Flush patch before moving on
+        if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
+        const s = sessionRef.current;
+        if (s) {
+          apiFetch("/api/onboarding/session", {
+            method: "PATCH",
+            body: JSON.stringify({
+              sessionId: s.id,
+              tool_data: data,
+              transcript: transcriptStateRef.current,
+              turn_count: transcriptStateRef.current.filter((m) => m.role === "user").length,
+            }),
+          }).catch(() => {});
         }
+        setPhase("writing-samples");
+        try { await conversation.endSession(); } catch { /* ignore */ }
         return "Profile build triggered.";
       },
     },
@@ -137,7 +208,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
     }
   }, [transcript]);
 
-  const startConversation = useCallback(async () => {
+  const startConversation = useCallback(async (isRetry = false) => {
     setError(null);
     setMicError(false);
 
@@ -158,16 +229,25 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
       await conversation.startSession({ signedUrl: data.signedUrl });
     } catch (err) {
       console.error("Start session error:", err);
-      setError("Failed to start voice conversation.");
+      setError(isRetry ? "Reconnect failed. Continue on web to preserve your progress." : "Failed to start voice conversation.");
     }
   }, [conversation]);
 
   const stopConversation = useCallback(async () => {
-    try {
-      await conversation.endSession();
-    } catch {
-      // Already ended
+    // Flush pending patch
+    if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
+    const s = sessionRef.current;
+    if (s && transcript.length > 0) {
+      apiFetch("/api/onboarding/session", {
+        method: "PATCH",
+        body: JSON.stringify({
+          sessionId: s.id,
+          transcript,
+          turn_count: transcript.filter((m) => m.role === "user").length,
+        }),
+      }).catch(() => {});
     }
+    try { await conversation.endSession(); } catch { /* ignore */ }
     if (transcript.length >= 6) {
       setToolData({
         summary: "Manual stop after voice conversation",
@@ -197,6 +277,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           toolData,
           userId,
           writingSamples: samples.length > 0 ? samples : undefined,
+          sessionId: sessionRef.current?.id,
         }),
       });
 
@@ -213,6 +294,36 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
       setPhase("writing-samples");
     }
   }, [toolData, transcript, userId, writingSamples, onComplete]);
+
+  const handleStartOver = useCallback(async () => {
+    const s = sessionRef.current;
+    if (s) {
+      apiFetch("/api/onboarding/session", {
+        method: "DELETE",
+        body: JSON.stringify({ sessionId: s.id }),
+      }).catch(() => {});
+    }
+    setSession(null);
+    setTranscript([]);
+    setIsResuming(false);
+    setPhase("idle");
+    setError(null);
+    // Create fresh session
+    apiFetch("/api/onboarding/session").then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setSession(data.session);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const getWebContinueUrl = () => {
+    const s = sessionRef.current;
+    const baseUrl = process.env.PLASMO_PUBLIC_WEB_URL || "http://localhost:3000";
+    const params = new URLSearchParams({ mode: "voice" });
+    if (s) params.set("sessionId", s.id);
+    return `${baseUrl}/onboarding?${params.toString()}`;
+  };
 
   // -- Idle --
   if (phase === "idle") {
@@ -234,8 +345,12 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
               <path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
             </svg>
           </motion.div>
-          <h2>Talk to your voice coach</h2>
-          <p>Have a 3-5 min chat about your LinkedIn voice. Just talk naturally.</p>
+          <h2>{isResuming ? "Resume your voice chat" : "Talk to your voice coach"}</h2>
+          <p>
+            {isResuming
+              ? `You've already shared ${transcript.length} messages. Pick up where you left off.`
+              : "Have a 3-5 min chat about your LinkedIn voice. Just talk naturally."}
+          </p>
         </div>
 
         {micError && (
@@ -248,13 +363,23 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
 
         <motion.button
           className="btn-primary"
-          onClick={startConversation}
+          onClick={() => startConversation(false)}
           style={{ width: "100%" }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          Start Voice Chat
+          {isResuming ? "Resume Voice Chat" : "Start Voice Chat"}
         </motion.button>
+
+        {isResuming && (
+          <button
+            className="btn-new-post"
+            onClick={handleStartOver}
+            style={{ marginTop: 8, color: "#999", fontSize: 12 }}
+          >
+            Start over
+          </button>
+        )}
 
         <button
           className="btn-new-post"
@@ -292,6 +417,8 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           </AnimatePresence>
         </div>
 
+        {error && <div className="error-msg" style={{ fontSize: 11, textAlign: "center" }}>{error}</div>}
+
         {transcript.length > 0 && (
           <div className="voice-transcript" ref={transcriptRef}>
             <AnimatePresence initial={false}>
@@ -314,6 +441,15 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         <button className="btn-secondary" onClick={stopConversation} style={{ width: "100%", marginTop: 12 }}>
           {transcript.length >= 6 ? "I'm done, build my profile" : "End conversation"}
         </button>
+
+        <a
+          href={getWebContinueUrl()}
+          target="_blank"
+          rel="noreferrer"
+          style={{ display: "block", textAlign: "center", marginTop: 8, color: "#999", fontSize: 11, textDecoration: "underline" }}
+        >
+          Continue on web (preserves progress)
+        </a>
       </motion.div>
     );
   }

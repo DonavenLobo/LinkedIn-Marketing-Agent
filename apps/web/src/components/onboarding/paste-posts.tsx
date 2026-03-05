@@ -73,7 +73,13 @@ export function PastePostsOnboarding({ redirectTo, isRedo }: PastePostsOnboardin
         <textarea
           value={posts}
           onChange={(e) => setPosts(e.target.value)}
-          placeholder="Example:\n\nPost 1...\n\n---\n\nPost 2...\n\nPost 3..."
+          placeholder={`Example:
+
+Post 1...
+
+Post 2...
+
+Post 3...`}
           rows={10}
           className="min-h-[240px] flex-1 resize-y rounded-lg border border-border bg-surface-subtle px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />

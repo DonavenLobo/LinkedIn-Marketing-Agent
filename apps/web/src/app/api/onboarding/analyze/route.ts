@@ -34,11 +34,12 @@ function extractName(transcript: TranscriptMessage[]): string | null {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { transcript, toolData, userId, writingSamples: externalSamples } = body as {
+    const { transcript, toolData, userId, writingSamples: externalSamples, sessionId } = body as {
       transcript: TranscriptMessage[];
       toolData: ProfileToolData;
       userId: string;
       writingSamples?: string[];
+      sessionId?: string;
     };
 
     if (!transcript || !userId || !toolData) {
@@ -225,6 +226,15 @@ Respond ONLY with valid JSON matching this exact schema:
       .from("user_profiles")
       .update(profileUpdate)
       .eq("id", userId);
+
+    // Mark session completed if we have a sessionId
+    if (sessionId) {
+      await supabase
+        .from("onboarding_sessions")
+        .update({ status: "completed", updated_at: new Date().toISOString() })
+        .eq("id", sessionId)
+        .eq("user_id", userId);
+    }
 
     // ── Phase 3: Sample Post Opening (sonnet — voice mimicking) ─────────────
     const sigPhrases = (voiceData.signature_phrases as string[] | undefined)?.join(", ") || "none";
