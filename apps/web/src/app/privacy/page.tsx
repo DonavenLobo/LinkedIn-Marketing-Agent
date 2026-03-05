@@ -1,19 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — LinkedIn Agent",
   description: "Privacy policy for the LinkedIn Marketing Agent app and Chrome extension.",
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
   const lastUpdated = "March 2, 2026";
+
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let backHref = "/";
+  if (user) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("onboarding_complete")
+      .eq("id", user.id)
+      .single();
+    backHref = profile?.onboarding_complete ? "/create" : "/onboarding";
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-3xl px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors">
+          <Link href={backHref} className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors">
             ← LinkedIn Agent
           </Link>
           <span className="text-xs text-gray-400">Last updated {lastUpdated}</span>

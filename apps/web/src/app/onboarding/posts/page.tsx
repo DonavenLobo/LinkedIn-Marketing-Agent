@@ -30,6 +30,5 @@ export default async function OnboardingPostsPage({
     ? redoFlag.includes("1")
     : redoFlag === "1";
 
-  return <PastePostsOnboarding redirectTo={redirectTo} isRedo={isRedo} />;
+  return <PastePostsOnboarding redirectTo={redirectTo} isRedo={isRedo} userId={user.id} />;
 }
-

@@ -96,6 +96,39 @@ export interface AnalyzeRequest {
   toolData: ProfileToolData;
   userId: string;
   writingSamples?: string[];
+  sessionId?: string;
+}
+
+// ---- Onboarding session types ----
+
+export interface OnboardingSession {
+  id: string;
+  user_id: string;
+  status: "in_progress" | "completed" | "abandoned";
+  mode: "voice" | "text";
+  transcript: TranscriptMessage[];
+  turn_count: number;
+  linkedin_import: LinkedInImportData | null;
+  tool_data: ProfileToolData | null;
+  writing_samples: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LinkedInPosition {
+  title: string;
+  company: string;
+  description: string | null;
+}
+
+export interface LinkedInImportData {
+  headline: string | null;
+  summary: string | null;
+  industry: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  positions: LinkedInPosition[];
+  skills: string[];
 }
 
 // ---- Database type for Supabase client ----

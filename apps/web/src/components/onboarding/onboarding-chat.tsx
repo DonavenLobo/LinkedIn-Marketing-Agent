@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { Progress } from "@linkedin-agent/shared";
-import type { ProfileToolData, TranscriptMessage } from "@linkedin-agent/shared";
+import type { ProfileToolData, TranscriptMessage, LinkedInImportData } from "@linkedin-agent/shared";
 
 interface OnboardingChatProps {
   userId: string;
@@ -16,14 +16,27 @@ interface OnboardingChatProps {
   embedded?: boolean;
   /** Whether this is a redo flow (used for downstream routing/copy) */
   isRedo?: boolean;
+  /** Session ID to resume from (voice-to-text failover or existing text session) */
+  sessionId?: string;
+  /** Initial transcript from a voice session being continued as text */
+  initialTranscript?: TranscriptMessage[];
+  /** LinkedIn import data to speed up onboarding */
+  linkedInData?: LinkedInImportData | null;
 }
 
-function getProgress(userMessageCount: number, isBuilding: boolean): { label: string; value: number } {
+function getProgress(
+  userMessageCount: number,
+  isBuilding: boolean,
+  hasLinkedIn: boolean,
+): { label: string; value: number } {
+  // LinkedIn import pre-fills context, so we start higher and need fewer exchanges
+  const offset = hasLinkedIn ? 20 : 0;
   if (isBuilding) return { label: "Creating your voice profile...", value: 95 };
-  if (userMessageCount <= 1) return { label: "Getting to know you...", value: 15 };
-  if (userMessageCount <= 3) return { label: "Understanding your style...", value: 40 };
-  if (userMessageCount <= 5) return { label: "Dialling in your voice...", value: 65 };
-  return { label: "Almost there...", value: 85 };
+  if (userMessageCount <= 1) return { label: "Getting to know you...", value: 15 + offset };
+  if (userMessageCount <= 2) return { label: "Understanding your style...", value: 40 + offset };
+  if (userMessageCount <= 3) return { label: "Dialling in your voice...", value: 60 + offset };
+  if (userMessageCount <= 4) return { label: "Almost there...", value: 75 + offset };
+  return { label: "Almost there...", value: Math.min(88 + offset, 90) };
 }
 
 interface ProfileResult {
@@ -44,7 +57,7 @@ function ProfileReadyCard({
     <div className="mx-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
       <div className="mb-4">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-          ✨ Voice Profile Ready
+          Voice Profile Ready
         </span>
       </div>
 
@@ -84,6 +97,9 @@ export function OnboardingChat({
   redirectTo = "/create",
   embedded,
   isRedo = false,
+  sessionId,
+  initialTranscript,
+  linkedInData,
 }: OnboardingChatProps) {
   const router = useRouter();
   const [isBuilding, setIsBuilding] = useState(false);
@@ -92,6 +108,8 @@ export function OnboardingChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasStarted = useRef(false);
   const hasTriggeredBuild = useRef(false);
+  const isResuming = !!initialTranscript && initialTranscript.length > 0;
+  const hasLinkedIn = !!(linkedInData?.headline || linkedInData?.positions?.length);
 
   const {
     messages,
@@ -105,6 +123,19 @@ export function OnboardingChat({
   } = useChat({
     api: "/api/onboarding/chat",
     maxSteps: 1,
+    body: {
+      linkedInData: linkedInData ?? undefined,
+      isResuming,
+      initialTranscript: initialTranscript ?? undefined,
+    },
+    initialMessages: initialTranscript
+      ? initialTranscript.map((m, i) => ({
+          id: `resume-${i}`,
+          role: m.role,
+          content: m.content,
+          parts: [{ type: "text" as const, text: m.content }],
+        }))
+      : undefined,
   });
 
   const isStreaming = status === "streaming" || status === "submitted";
@@ -113,7 +144,12 @@ export function OnboardingChat({
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    append({ role: "user", content: "[START_ONBOARDING]" });
+    // If resuming, don't send [START_ONBOARDING] — send a resume trigger instead
+    if (isResuming) {
+      append({ role: "user", content: "[RESUME_ONBOARDING]" });
+    } else {
+      append({ role: "user", content: "[START_ONBOARDING]" });
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to bottom on new messages
@@ -130,14 +166,23 @@ export function OnboardingChat({
       setBuildError(null);
 
       const transcript: TranscriptMessage[] = messages
-        .filter((m) => !(m.role === "user" && m.content === "[START_ONBOARDING]"))
+        .filter(
+          (m) =>
+            m.content !== "[START_ONBOARDING]" && m.content !== "[RESUME_ONBOARDING]"
+        )
         .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+      // Include initial transcript if resuming (it's already in messages as initialMessages)
       try {
         const response = await fetch("/api/onboarding/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transcript, toolData: toolArgs, userId }),
+          body: JSON.stringify({
+            transcript,
+            toolData: toolArgs,
+            userId,
+            sessionId,
+          }),
         });
 
         if (!response.ok) {
@@ -162,7 +207,7 @@ export function OnboardingChat({
         setIsBuilding(false);
       }
     },
-    [messages, userId]
+    [messages, userId, sessionId]
   );
 
   // Watch for tool invocation in messages
@@ -184,15 +229,49 @@ export function OnboardingChat({
     }
   }, [messages, isBuilding, profileResult, triggerBuild]);
 
-  // Fallback: show manual trigger after 10 user messages
+  // Patch session transcript on each new user message
+  useEffect(() => {
+    if (!sessionId) return;
+    const userMessages = messages.filter(
+      (m) =>
+        m.role === "user" &&
+        m.content !== "[START_ONBOARDING]" &&
+        m.content !== "[RESUME_ONBOARDING]"
+    );
+    if (userMessages.length === 0) return;
+
+    const transcript: TranscriptMessage[] = messages
+      .filter(
+        (m) =>
+          m.content !== "[START_ONBOARDING]" && m.content !== "[RESUME_ONBOARDING]"
+      )
+      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+    fetch("/api/onboarding/session", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        transcript,
+        turn_count: userMessages.length,
+        mode: "text",
+      }),
+    }).catch(() => {});
+  }, [messages, sessionId]);
+
+  // Fallback: show manual trigger after 8 user messages
   const userMessageCount = messages.filter(
-    (m) => m.role === "user" && m.content !== "[START_ONBOARDING]"
+    (m) =>
+      m.role === "user" &&
+      m.content !== "[START_ONBOARDING]" &&
+      m.content !== "[RESUME_ONBOARDING]"
   ).length;
   const showFallbackButton =
-    userMessageCount >= 10 && !isBuilding && !profileResult && !hasTriggeredBuild.current;
+    userMessageCount >= 8 && !isBuilding && !profileResult && !hasTriggeredBuild.current;
 
   const visibleMessages = messages.filter(
-    (m) => !(m.role === "user" && m.content === "[START_ONBOARDING]")
+    (m) =>
+      m.content !== "[START_ONBOARDING]" && m.content !== "[RESUME_ONBOARDING]"
   );
 
   return (
@@ -203,10 +282,17 @@ export function OnboardingChat({
       <div className="border-b border-border bg-surface/80 backdrop-blur-sm px-6 py-4 space-y-2">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-ink">Voice Profile Setup</h1>
-          <span className="text-xs text-ink-muted">{getProgress(userMessageCount, isBuilding).label}</span>
+          <span className="text-xs text-ink-muted">{getProgress(userMessageCount, isBuilding, hasLinkedIn).label}</span>
         </div>
-        <Progress value={getProgress(userMessageCount, isBuilding).value} className="h-1.5" />
+        <Progress value={getProgress(userMessageCount, isBuilding, hasLinkedIn).value} className="h-1.5" />
       </div>
+
+      {/* Resumed from voice banner */}
+      {isResuming && (
+        <div className="mx-6 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+          Resumed from voice conversation — picking up where you left off.
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
