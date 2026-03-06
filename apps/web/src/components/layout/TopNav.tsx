@@ -1,8 +1,7 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import {
     Avatar,
@@ -25,10 +24,13 @@ interface TopNavProps {
 
 export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
+    const isCreatePage = pathname === "/create"
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -106,6 +108,13 @@ export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
                                         Settings
                                     </Link>
                                 </DropdownMenuItem>
+                                {isCreatePage && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/feedback" className="flex cursor-pointer rounded-lg px-3 py-2.5">
+                                            Feedback
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem asChild>
                                     <Link href="/privacy" className="flex cursor-pointer rounded-lg px-3 py-2.5">
                                         Privacy Policy
