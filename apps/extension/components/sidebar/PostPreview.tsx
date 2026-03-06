@@ -115,8 +115,8 @@ export function PostPreview({
     if (paragraphs.length === 0) return null;
     return paragraphs.map((para, i) => {
       let id: string | undefined;
-      if (i === 0) id = "tour-post-hook";
-      if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
+      if (i === 0 && paragraphs.length > 1) id = "tour-post-hook";
+      if (i === paragraphs.length - 1) id = "tour-post-cta";
       return (
         <span
           key={i}
@@ -144,6 +144,17 @@ export function PostPreview({
             <div className="headline">LinkedIn Professional</div>
             <div className="time">Just now</div>
           </div>
+          {!isStreaming && content && (
+            <button
+              className="pencil-edit-btn"
+              onClick={handleStartEdit}
+              title="Edit post"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" />
+              </svg>
+            </button>
+          )}
         </div>
         <div
           key={mode}
@@ -247,17 +258,13 @@ export function PostPreview({
                     Feedback
                   </button>
                 </div>
-                <div className="post-actions" style={{ marginTop: 6 }}>
-                  <button
-                    className="btn-secondary"
-                    onClick={handleStartEdit}
-                  >
-                    Edit Post
-                  </button>
-                  <button className="btn-primary" onClick={handleCopy}>
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
+                {approved && (
+                  <div className="post-actions" style={{ marginTop: 6 }}>
+                    <button className="btn-primary" style={{ flex: 1 }} onClick={handleCopy}>
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                )}
                 <button className="btn-new-post" onClick={handleNewPost}>
                   New Post
                 </button>
