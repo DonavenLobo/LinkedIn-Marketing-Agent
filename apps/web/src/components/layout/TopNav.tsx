@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import {
     Avatar,
@@ -25,10 +25,27 @@ interface TopNavProps {
 
 export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
     const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false)
+
+    const isCreatePage = pathname === "/create"
+    const openProfileMenuParam = searchParams.get("openProfileMenu")
+
+    React.useEffect(() => {
+        if (pathname !== "/create") {
+            setIsProfileMenuOpen(false)
+            return
+        }
+
+        if (openProfileMenuParam === "1") {
+            setIsProfileMenuOpen(true)
+        }
+    }, [pathname, openProfileMenuParam])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -65,7 +82,7 @@ export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <DropdownMenu>
+                    <DropdownMenu open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
@@ -103,9 +120,16 @@ export function TopNav({ userEmail, avatarUrl, name }: TopNavProps) {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link href="/settings" className="flex cursor-pointer rounded-lg px-3 py-2.5">
-                                        Settings
+                                        Brand Guidelines Setup
                                     </Link>
                                 </DropdownMenuItem>
+                                {isCreatePage && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/feedback" className="flex cursor-pointer rounded-lg px-3 py-2.5">
+                                            Feedback
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem asChild>
                                     <Link href="/privacy" className="flex cursor-pointer rounded-lg px-3 py-2.5">
                                         Privacy Policy

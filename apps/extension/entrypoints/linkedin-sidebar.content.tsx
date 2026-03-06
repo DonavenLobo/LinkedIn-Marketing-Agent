@@ -2,11 +2,27 @@ import ReactDOM from "react-dom/client";
 import { SidebarApp } from "../components/sidebar/SidebarApp";
 import sidebarCss from "../assets/sidebar.css?inline";
 
+const HIDDEN_PATH_PREFIXES = [
+  "/login",
+  "/uas/login",
+  "/checkpoint",
+  "/authwall",
+];
+
+function shouldHideSidebarForPath(pathname: string): boolean {
+  const normalized = pathname.toLowerCase();
+  return HIDDEN_PATH_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
 export default defineContentScript({
   matches: ["https://www.linkedin.com/*"],
   cssInjectionMode: "manual",
 
   async main(ctx) {
+    if (shouldHideSidebarForPath(window.location.pathname)) {
+      return;
+    }
+
     const ui = await createShadowRootUi(ctx, {
       name: "linkedin-agent-sidebar",
       position: "overlay",
