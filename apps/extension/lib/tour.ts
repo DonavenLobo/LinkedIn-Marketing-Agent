@@ -25,9 +25,9 @@ export const SIDEBAR_TOUR_STEPS: TourStep[] = [
   },
   {
     selector: ".settings-gear-btn",
-    title: "Brand guidelines",
+    title: "Account menu",
     description:
-      "Tap the gear to add company voice guidelines that shape every post.",
+      "Tap the gear to open the web create page with your profile dropdown ready.",
     side: "bottom",
     spotlightPadding: 6,
   },
