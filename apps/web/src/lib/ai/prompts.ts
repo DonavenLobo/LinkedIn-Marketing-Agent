@@ -45,11 +45,12 @@ ANTI-PATTERNS (never do these)
 /**
  * Anti-AI pattern rules derived from the humanizer skill.
  * Based on Wikipedia's "Signs of AI writing" guide (24 distinct patterns).
- * IMPORTANT: These are LOW-PRIORITY cleanup rules. Voice profile settings always override them.
- * Goal: strip statistically-common AI vocabulary and structures WITHOUT altering the user's voice.
+ * Injected near the end of buildSystemPrompt(), after all voice and brand constraints.
+ * Voice profile rules appear earlier in the prompt; if a user's authentic phrasing
+ * naturally uses a banned word, handle it via voice_profile.avoid_phrases to override.
  */
 export const HUMANIZER_ANTI_AI_PATTERNS = `
-ANTI-AI WRITING RULES (apply after all voice and formatting rules above):
+ANTI-AI WRITING RULES (these apply to all posts — if they conflict with the user's authentic voice style captured above, voice wins):
 
 BANNED VOCABULARY — never use these words or phrases:
 - "landscape" (the competitive landscape, the current landscape)
@@ -63,7 +64,7 @@ BANNED VOCABULARY — never use these words or phrases:
 - "interplay"
 - "it's worth noting" or "it is worth noting"
 - "game-changer" or "game changer"
-- "transformative" (unless you can prove it)
+- "transformative" (just say what actually changed)
 - "navigate" as a metaphor ("navigate challenges," "navigate the market")
 - "paradigm" or "paradigm shift"
 - "multifaceted"
@@ -289,6 +290,5 @@ export function buildFeedbackPrompt(
     `The user wants these changes: "${feedback}"\n`,
     `Rewrite the post incorporating their feedback while keeping the same topic and core message.`,
     `Write ONLY the revised post text. No commentary, labels, or explanation.`,
-    `\n${HUMANIZER_ANTI_AI_PATTERNS}`,
   ].join("\n");
 }
