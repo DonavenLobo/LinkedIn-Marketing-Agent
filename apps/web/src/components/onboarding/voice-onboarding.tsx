@@ -391,7 +391,7 @@ export function VoiceOnboarding({ userId, onFallbackToText }: VoiceOnboardingPro
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           <p className="text-sm text-gray-600">Analyzing your conversation and building your voice profile...</p>
-          <p className="text-xs text-gray-400">This usually takes 15-30 seconds</p>
+          <p className="text-xs text-gray-400">This usually takes a couple minutes!</p>
         </div>
       </div>
     );
