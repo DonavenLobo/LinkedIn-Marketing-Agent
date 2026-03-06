@@ -37,6 +37,7 @@ export function PostPreview({
   const [inserted, setInserted] = useState(false);
   const [insertError, setInsertError] = useState<string | null>(null);
   const originalTextRef = useRef("");
+  const editableRef = useRef<HTMLDivElement>(null);
 
   if (!content && !isStreaming) return null;
 
@@ -70,11 +71,13 @@ export function PostPreview({
     setEditText(content);
     setMode("editing");
     setApproved(false);
+    requestAnimationFrame(() => editableRef.current?.focus());
   };
 
   const handleSaveEdit = () => {
-    if (!editText.trim()) return;
-    onEdit(originalTextRef.current, editText);
+    const text = editableRef.current?.innerText || editText;
+    if (!text.trim()) return;
+    onEdit(originalTextRef.current, text);
     setMode("preview");
     setApproved(false);
   };
@@ -107,6 +110,25 @@ export function PostPreview({
     }
   };
 
+  const renderParagraphs = () => {
+    const paragraphs = content.split(/\n\n+/).filter(Boolean);
+    if (paragraphs.length === 0) return null;
+    return paragraphs.map((para, i) => {
+      let id: string | undefined;
+      if (i === 0) id = "tour-post-hook";
+      if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
+      return (
+        <span
+          key={i}
+          id={id}
+          style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? "0.75em" : 0 }}
+        >
+          {para}
+        </span>
+      );
+    });
+  };
+
   return (
     <>
       <motion.div
@@ -123,41 +145,20 @@ export function PostPreview({
             <div className="time">Just now</div>
           </div>
         </div>
-        <div className="post-preview-body">
-          {mode === "editing" ? (
-            <textarea
-              className="edit-textarea"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              rows={10}
-            />
+        <div
+          key={mode}
+          className={`post-preview-body ${mode === "editing" ? "post-preview-body--editing" : ""}`}
+          contentEditable={mode === "editing"}
+          suppressContentEditableWarning
+          ref={editableRef}
+          onInput={(e) => setEditText(e.currentTarget.innerText)}
+        >
+          {isFeedbackStreaming ? (
+            <span className="feedback-streaming-text">{content}</span>
           ) : (
-            <>
-              {isFeedbackStreaming ? (
-                <span className="feedback-streaming-text">{content}</span>
-              ) : (
-                (() => {
-                  const paragraphs = content.split(/\n\n+/).filter(Boolean);
-                  if (paragraphs.length === 0) return null;
-                  return paragraphs.map((para, i) => {
-                    let id: string | undefined;
-                    if (i === 0) id = "tour-post-hook";
-                    if (i === paragraphs.length - 1 && paragraphs.length > 1) id = "tour-post-cta";
-                    return (
-                      <span
-                        key={i}
-                        id={id}
-                        style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? "0.75em" : 0 }}
-                      >
-                        {para}
-                      </span>
-                    );
-                  });
-                })()
-              )}
-              {(isStreaming || isFeedbackStreaming) && <span className="cursor-blink" />}
-            </>
+            renderParagraphs()
           )}
+          {(isStreaming || isFeedbackStreaming) && <span className="cursor-blink" />}
         </div>
         <div className="post-preview-engagement">
           <span>42</span>
@@ -214,7 +215,6 @@ export function PostPreview({
                 <button
                   className="btn-primary"
                   onClick={handleSaveEdit}
-                  disabled={!editText.trim()}
                 >
                   Save Edit
                 </button>

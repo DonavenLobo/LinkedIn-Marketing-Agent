@@ -37,13 +37,12 @@ function StepIndicator({ current }: { current: Step }) {
         <div key={s.key} className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                i < currentIdx
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${i < currentIdx
                   ? "bg-accent text-white"
                   : i === currentIdx
                     ? "bg-accent text-white"
                     : "bg-surface-muted text-ink-muted"
-              }`}
+                }`}
             >
               {i < currentIdx ? (
                 <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
@@ -54,9 +53,8 @@ function StepIndicator({ current }: { current: Step }) {
               )}
             </div>
             <span
-              className={`text-xs font-medium ${
-                i === currentIdx ? "text-ink" : i < currentIdx ? "text-ink-muted" : "text-ink-muted"
-              }`}
+              className={`text-xs font-medium ${i === currentIdx ? "text-ink" : i < currentIdx ? "text-ink-muted" : "text-ink-muted"
+                }`}
             >
               {s.label}
             </span>
@@ -151,11 +149,11 @@ export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverL
               Step 1 · Give us some context
             </p>
             <h1 className="font-display text-3xl text-ink tracking-tight sm:text-4xl">
-              Share your LinkedIn profile
+              Tell us about yourself
             </h1>
             <p className="mt-2 text-sm text-ink-muted max-w-xl">
-              Before the conversation, share your LinkedIn data so the agent already knows who you
-              are and what you do. This cuts your onboarding time from 5 minutes down to 2-3.
+              Share some info from your LinkedIn profile so the agent already knows who you are.
+              Just copy-paste from your profile page, or upload a couple of screenshots — takes 30 seconds.
             </p>
           </header>
 
