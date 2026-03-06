@@ -5,7 +5,7 @@ import { useCompletion } from "ai/react";
 import { toast } from "sonner";
 import { HashtagSuggestions } from "./hashtag-suggestions";
 
-type Mode = "preview" | "feedback" | "editing";
+type Mode = "preview" | "feedback";
 
 interface PostActionsProps {
   content: string;
@@ -25,7 +25,6 @@ export function PostActions({
   const [mode, setMode] = useState<Mode>("preview");
   const [approved, setApproved] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
-  const [editText, setEditText] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const currentContentRef = useRef(content);
   currentContentRef.current = content;
@@ -44,11 +43,6 @@ export function PostActions({
     },
   });
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
-    toast.success("Copied to clipboard");
-  };
-
   const handleApprove = async () => {
     if (!postId) return;
     setIsSaving(true);
@@ -65,6 +59,11 @@ export function PostActions({
     }
   };
 
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    toast.success("Copied to clipboard");
+  };
+
   const handleSendFeedback = async () => {
     if (!feedbackText.trim() || !postId) return;
     await complete("", {
@@ -75,27 +74,6 @@ export function PostActions({
         topic,
       },
     });
-  };
-
-  const handleSaveEdit = async () => {
-    if (!postId || !editText.trim()) return;
-    setIsSaving(true);
-    try {
-      await fetch("/api/post/edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          generated_post_id: postId,
-          original_text: currentContentRef.current,
-          edited_text: editText,
-        }),
-      });
-      onContentUpdate(editText);
-      setMode("preview");
-      toast.success("Edits saved");
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   const displayFeedbackContent = isFeedbackStreaming ? feedbackCompletion : null;
@@ -143,44 +121,9 @@ export function PostActions({
     );
   }
 
-  if (mode === "editing") {
-    return (
-      <div className="space-y-3">
-        <textarea
-          value={editText}
-          onChange={(e) => setEditText(e.target.value)}
-          rows={10}
-          className="w-full rounded-md border border-border px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-        <div className="flex gap-2">
-          <button
-            onClick={handleSaveEdit}
-            disabled={isSaving || !editText.trim()}
-            className="flex-1 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {isSaving ? "Saving..." : "Save Edit"}
-          </button>
-          <button
-            onClick={() => { setMode("preview"); setEditText(content); }}
-            className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-ink-light hover:bg-surface-subtle transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
-        <button
-          onClick={handleApprove}
-          disabled={isSaving || approved || !postId}
-          className="flex-1 rounded-md bg-success px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {approved ? "Approved!" : isSaving ? "Saving..." : "Approve"}
-        </button>
+      <div id="tour-post-actions" className="flex gap-2">
         <button
           onClick={() => { setMode("feedback"); setFeedbackText(""); }}
           disabled={!postId}
@@ -188,21 +131,22 @@ export function PostActions({
         >
           Give Feedback
         </button>
-      </div>
-      <div className="flex gap-2">
         <button
-          onClick={() => { setMode("editing"); setEditText(content); }}
-          className="flex-1 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-ink-light hover:bg-surface-subtle transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={handleApprove}
+          disabled={isSaving || approved || !postId}
+          className="flex-1 rounded-md bg-success px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          Edit Post
+          {approved ? "Approved!" : isSaving ? "Saving..." : "Approve"}
         </button>
+      </div>
+      {approved && (
         <button
           onClick={handleCopy}
-          className="flex-1 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Copy
         </button>
-      </div>
+      )}
       <button
         onClick={onRegenerate}
         className="w-full text-xs text-ink-muted underline underline-offset-2 hover:text-ink-light transition py-1"
@@ -210,7 +154,7 @@ export function PostActions({
         Regenerate from scratch
       </button>
       {!postId && (
-        <p className="text-xs text-ink-muted text-center">Approve/Feedback/Edit require the post to finish saving...</p>
+        <p className="text-xs text-ink-muted text-center">Approve/Feedback require the post to finish saving...</p>
       )}
       {approved && postId && (
         <HashtagSuggestions postContent={content} postId={postId} />

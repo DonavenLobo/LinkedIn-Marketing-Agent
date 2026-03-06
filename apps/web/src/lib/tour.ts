@@ -87,7 +87,7 @@ export async function startCreatePageTour() {
   }, 800);
 }
 
-// ── Post review tour (hook + CTA, after first generation) ──
+// ── Post review tour (hook + CTA + edit + approve, after first generation) ──
 const postReviewSteps: DriveStep[] = [
   {
     element: "#tour-post-hook",
@@ -105,6 +105,26 @@ const postReviewSteps: DriveStep[] = [
       title: "The call to action",
       description:
         "End with engagement. A question or directive drives comments.",
+      side: "top",
+      align: "start",
+    },
+  },
+  {
+    element: "#tour-edit-pencil",
+    popover: {
+      title: "Edit inline",
+      description:
+        "Click the pencil to edit the post directly inside the preview. No separate editor needed.",
+      side: "bottom",
+      align: "end",
+    },
+  },
+  {
+    element: "#tour-post-actions",
+    popover: {
+      title: "Approve to teach your AI",
+      description:
+        "Hit Approve once you're happy with a post. This signals to your agent what great content looks like for you — improving every future post.",
       side: "top",
       align: "start",
     },

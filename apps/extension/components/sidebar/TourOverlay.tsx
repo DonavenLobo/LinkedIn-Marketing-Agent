@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { TourStep } from "../../lib/tour";
 
@@ -54,6 +54,7 @@ function computePopoverPosition(
 export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const hasMeasuredRef = useRef(false);
 
   const step = steps[currentStep];
   const isLast = currentStep === steps.length - 1;
@@ -62,7 +63,17 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
   const measureTarget = useCallback(() => {
     if (!containerEl || !step) return;
     const el = containerEl.querySelector(step.selector);
-    if (!el) return;
+
+    hasMeasuredRef.current = true;
+
+    if (!el) {
+      // Element not found — clear rect so fallback popover renders
+      setTargetRect(null);
+      return;
+    }
+
+    // Scroll element into view before measuring
+    (el as HTMLElement).scrollIntoView({ block: "nearest", behavior: "smooth" });
 
     const containerRect = containerEl.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
@@ -77,6 +88,7 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
   }, [containerEl, step]);
 
   useEffect(() => {
+    hasMeasuredRef.current = false;
     measureTarget();
     window.addEventListener("resize", measureTarget);
     const content = containerEl?.querySelector(".sidebar-content");
@@ -99,29 +111,39 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
     if (!isFirst) setCurrentStep((s) => s - 1);
   };
 
-  if (!targetRect) return null;
+  // Fallback position when element not found — render popover near top so user can still skip/advance
+  const fallbackPopoverStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 80,
+    left: 8,
+    right: 8,
+  };
 
-  const popoverStyle = computePopoverPosition(targetRect, step.side);
+  const popoverStyle = targetRect
+    ? computePopoverPosition(targetRect, step.side)
+    : fallbackPopoverStyle;
 
   return (
     <div className="tour-overlay">
-      {/* SVG mask with spotlight cutout */}
+      {/* SVG mask with spotlight cutout — omit cutout when element not found */}
       <svg className="tour-mask" onClick={onComplete}>
         <defs>
           <mask id="tour-spotlight-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <motion.rect
-              x={targetRect.left}
-              y={targetRect.top}
-              width={targetRect.width}
-              height={targetRect.height}
-              rx="8"
-              ry="8"
-              fill="black"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            />
+            {targetRect && (
+              <motion.rect
+                x={targetRect.left}
+                y={targetRect.top}
+                width={targetRect.width}
+                height={targetRect.height}
+                rx="8"
+                ry="8"
+                fill="black"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
           </mask>
         </defs>
         <rect
@@ -134,20 +156,22 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
         />
       </svg>
 
-      {/* Spotlight border ring */}
-      <motion.div
-        className="tour-spotlight-ring"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          top: targetRect.top,
-          left: targetRect.left,
-          width: targetRect.width,
-          height: targetRect.height,
-        }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-      />
+      {/* Spotlight border ring — only when element found */}
+      {targetRect && (
+        <motion.div
+          className="tour-spotlight-ring"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            top: targetRect.top,
+            left: targetRect.left,
+            width: targetRect.width,
+            height: targetRect.height,
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
+      )}
 
       {/* Popover tooltip */}
       <AnimatePresence mode="wait">

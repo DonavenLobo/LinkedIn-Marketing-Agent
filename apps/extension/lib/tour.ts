@@ -59,6 +59,14 @@ export const POST_REVIEW_TOUR_STEPS: TourStep[] = [
     side: "top",
     spotlightPadding: 4,
   },
+  {
+    selector: ".btn-approve",
+    title: "Approve to train your AI",
+    description:
+      "Once you're happy with a post, hit Approve. This tells your agent what great content looks like for you and improves every future post.",
+    side: "top",
+    spotlightPadding: 6,
+  },
 ];
 
 // ── API-backed tour flag helpers ──
