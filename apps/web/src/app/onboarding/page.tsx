@@ -32,7 +32,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("onboarding_complete, linkedin_import_data")
+    .select("onboarding_complete, linkedin_import_data, display_name")
     .eq("id", user.id)
     .single();
 
@@ -89,6 +89,16 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     return <VoiceAgentOnboarding isRedo={isRedo} linkedInData={linkedInData} />;
   }
 
+  // Extract first name — cast profile to record so display_name is always accessible,
+  // then fall back through auth metadata keys (LinkedIn OAuth may use 'name' or 'full_name')
+  const profileRecord = profile as Record<string, unknown> | null;
+  const rawName =
+    (profileRecord?.display_name as string | null) ||
+    (user.user_metadata?.full_name as string | null) ||
+    (user.user_metadata?.name as string | null) ||
+    "";
+  const userName = rawName.split(" ")[0] || user.email?.split("@")[0] || "there";
+
   // Default: show choice screen first
-  return <OnboardingEntry isRedo={isRedo} existingSession={existingSession} linkedInData={linkedInData} />;
+  return <OnboardingEntry isRedo={isRedo} existingSession={existingSession} linkedInData={linkedInData} userName={userName} />;
 }
