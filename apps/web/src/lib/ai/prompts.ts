@@ -43,6 +43,66 @@ ANTI-PATTERNS (never do these)
 - Storytelling and personal lessons outperform generic business advice — humanize the message`.trim();
 
 /**
+ * Anti-AI pattern rules derived from the humanizer skill.
+ * Based on Wikipedia's "Signs of AI writing" guide (24 distinct patterns).
+ * Injected near the end of buildSystemPrompt(), after all voice and brand constraints.
+ * Voice profile rules appear earlier in the prompt; if a user's authentic phrasing
+ * naturally uses a banned word, handle it via voice_profile.avoid_phrases to override.
+ */
+export const HUMANIZER_ANTI_AI_PATTERNS = `
+ANTI-AI WRITING RULES (these apply to all posts — if they conflict with the user's authentic voice style captured above, voice wins):
+
+BANNED VOCABULARY — never use these words or phrases:
+- "landscape" (the competitive landscape, the current landscape)
+- "delve" or "delve into"
+- "tapestry"
+- "showcase" (use "show" or "demonstrate")
+- "furthermore" or "moreover" (just start a new sentence)
+- "testament" ("a testament to" → just say what it shows)
+- "pivotal" (use "key," "critical," or just cut it)
+- "realm"
+- "interplay"
+- "it's worth noting" or "it is worth noting"
+- "game-changer" or "game changer"
+- "transformative" (just say what actually changed)
+- "navigate" as a metaphor ("navigate challenges," "navigate the market")
+- "paradigm" or "paradigm shift"
+- "multifaceted"
+- "in today's [X] world" or "in today's fast-paced environment"
+- "at the end of the day"
+- "the bottom line is"
+- "needless to say"
+- "it goes without saying"
+
+NO VAGUE ATTRIBUTIONS — never write "studies show," "research suggests," or "experts say" without naming a specific source. If you can't name it, cut the attribution and just state the point.
+
+NO COPULA AVOIDANCE — say what things ARE, not what they "serve as" or "act as":
+- Wrong: "This serves as a reminder that..."
+- Right: "This is a reminder that..." or just "Remember that..."
+
+NO FORCED PARALLELISMS:
+- No "not just X, but Y" constructions
+- No forcing three items into a list when two or four fit better
+- No false ranges like "anywhere from X to Y" — just give the number
+
+NO GENERIC CLOSINGS — never end with:
+- "It's an exciting time to be in [industry]"
+- "The future is bright"
+- "Only time will tell"
+- "What a time to be alive"
+- Generic inspirational platitudes
+
+NO INLINE BOLD HEADERS — do not write "**Key takeaway:** ..." or "**Bottom line:** ..." mid-post as a pseudo-header. Either bold nothing or bold a word for genuine emphasis.
+
+VARIED SENTENCE RHYTHM — mix short sentences with longer ones. A post where every sentence is 10-15 words long sounds like a robot. Break the pattern intentionally.
+
+SPECIFIC OVER GENERIC — replace vague language with real details:
+- Not "significant growth" → "revenue up 40% in 18 months"
+- Not "a major challenge" → name the actual challenge
+- Not "leading firm" → name the firm if you can, or just say "a firm"
+`.trim();
+
+/**
  * Builds the system prompt for post generation.
  * This is the key module to iterate on — currently uses the voice profile's
  * stored system_prompt plus few-shot examples from sample_posts.
@@ -102,6 +162,9 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile, brandGuidelines?: 
 
   // Platform strategy principles (voice profile rules above take precedence)
   parts.push(`\n${LINKEDIN_POST_PRINCIPLES}`);
+
+  // Anti-AI pattern cleanup (lowest priority — voice profile rules above take precedence)
+  parts.push(`\n${HUMANIZER_ANTI_AI_PATTERNS}`);
 
   parts.push(
     "\nIMPORTANT RULES:",

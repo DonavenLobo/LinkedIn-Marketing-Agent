@@ -33,3 +33,4 @@ pnpm-debug.log*
 # agent files
 *.claude
 claude_docs/
+docs/plans
