@@ -14,6 +14,7 @@ export default function CreatePage() {
   const [postId, setPostId] = useState<string | null>(null);
   const [displayContent, setDisplayContent] = useState("");
   const [chatKey, setChatKey] = useState(0);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const prevLoadingRef = useRef(false);
 
   // Create page tour on first visit
@@ -46,6 +47,7 @@ export default function CreatePage() {
   const handleReadyToGenerate = useCallback(
     async (enrichedTopic: string) => {
       setTopic(enrichedTopic);
+      setChatCollapsed(true);
       await complete("", { body: { topic: enrichedTopic } });
     },
     [complete]
@@ -57,6 +59,7 @@ export default function CreatePage() {
     setDisplayContent("");
     setCompletion("");
     setChatKey((k) => k + 1);
+    setChatCollapsed(false);
   }, [setCompletion]);
 
   const handleRegenerate = useCallback(async () => {
@@ -80,9 +83,18 @@ export default function CreatePage() {
   const previewContent = isLoading ? completion : displayContent || completion;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      {/* Left: Chat intake */}
-      <div id="tour-create-chat" className="space-y-6">
+    <div className="flex gap-4 items-start">
+      {/* Left: Chat intake — collapses when generation starts */}
+      <motion.div
+        id="tour-create-chat"
+        className="space-y-6 overflow-hidden flex-shrink-0"
+        animate={{
+          width: chatCollapsed ? 0 : "50%",
+          opacity: chatCollapsed ? 0 : 1,
+        }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        style={{ minWidth: 0 }}
+      >
         <PostChat
           key={chatKey}
           onReadyToGenerate={handleReadyToGenerate}
@@ -90,36 +102,74 @@ export default function CreatePage() {
           onStop={stop}
           isGenerating={isLoading}
         />
-      </div>
+      </motion.div>
 
-      {/* Right: Preview with orb background */}
-      <div id="tour-preview-area" className="relative min-h-[400px] lg:min-h-[480px]">
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-lg pointer-events-none"
-          initial={false}
-          animate={{ opacity: previewContent ? 0 : 1 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
+      {/* Chat toggle — shown once a post exists, toggles collapse/expand */}
+      {(previewContent || isLoading) && (
+        <motion.button
+          onClick={() => setChatCollapsed((c) => !c)}
+          className="self-start mt-2 flex-shrink-0 flex items-center justify-center rounded-full w-7 h-7 bg-surface border border-border text-ink-muted hover:text-ink hover:border-accent transition shadow-sm"
+          title={chatCollapsed ? "Show chat" : "Hide chat"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
-          <SignalCore generating={isLoading} />
-        </motion.div>
-        <div
-          className={`relative z-10 flex flex-col gap-4 min-h-[400px] lg:min-h-[480px] ${
-            !previewContent ? "justify-center" : "justify-start"
-          }`}
-        >
-          <LinkedInPreview content={previewContent} isLoading={isLoading} />
-          {previewContent && !isLoading && (
-            <PostActions
-              content={previewContent}
-              postId={resolvedPostId}
-              topic={topic}
-              onRegenerate={handleRegenerate}
-              onContentUpdate={(newContent) => {
-                setDisplayContent(newContent);
-                setCompletion(newContent);
-              }}
-            />
-          )}
+          <motion.svg
+            className="h-3.5 w-3.5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            animate={{ rotate: chatCollapsed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <path d="M10 3L5 8l5 5" />
+          </motion.svg>
+        </motion.button>
+      )}
+
+      {/* Right: Preview — flex-1 so it takes remaining space, content centered at max-width */}
+      <div id="tour-preview-area" className="flex-1 min-w-0">
+        <div className="mx-auto w-full max-w-xl">
+          <div className="relative min-h-[400px] lg:min-h-[480px]">
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-lg pointer-events-none"
+              initial={false}
+              animate={{ opacity: previewContent ? 0 : 1 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+            >
+              <SignalCore generating={isLoading} />
+            </motion.div>
+            <div
+              className={`relative z-10 flex flex-col gap-4 min-h-[400px] lg:min-h-[480px] ${
+                !previewContent ? "justify-center" : "justify-start"
+              }`}
+            >
+              <LinkedInPreview
+                content={previewContent}
+                isLoading={isLoading}
+                postId={resolvedPostId}
+                onContentUpdate={(newContent) => {
+                  setDisplayContent(newContent);
+                  setCompletion(newContent);
+                }}
+              />
+              {previewContent && !isLoading && (
+                <PostActions
+                  content={previewContent}
+                  postId={resolvedPostId}
+                  topic={topic}
+                  onRegenerate={handleRegenerate}
+                  onContentUpdate={(newContent) => {
+                    setDisplayContent(newContent);
+                    setCompletion(newContent);
+                  }}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

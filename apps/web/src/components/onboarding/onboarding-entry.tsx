@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { LinkedInImport } from "./linkedin-import";
 import type { OnboardingSession, LinkedInImportData } from "@linkedin-agent/shared";
 
@@ -9,6 +10,7 @@ interface OnboardingEntryProps {
   isRedo: boolean;
   existingSession?: OnboardingSession | null;
   linkedInData?: LinkedInImportData | null;
+  userName?: string;
 }
 
 type Step = "linkedin" | "choose";
@@ -68,10 +70,17 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverLinkedInData }: OnboardingEntryProps) {
+export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverLinkedInData, userName }: OnboardingEntryProps) {
   const router = useRouter();
   const [isAbandoning, setIsAbandoning] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(!isRedo && !!userName);
   const hasExistingLinkedIn = !!(serverLinkedInData?.headline || serverLinkedInData?.positions?.length);
+
+  useEffect(() => {
+    if (!showWelcome) return;
+    const timer = setTimeout(() => setShowWelcome(false), 4000);
+    return () => clearTimeout(timer);
+  }, [showWelcome]);
   const [step, setStep] = useState<Step>(hasExistingLinkedIn ? "choose" : "linkedin");
   const [linkedInData, setLinkedInData] = useState<LinkedInImportData | null>(serverLinkedInData ?? null);
 
@@ -106,6 +115,45 @@ export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverL
   const hasLinkedIn = !!(linkedInData?.headline || linkedInData?.positions?.length);
 
   return (
+    <>
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface px-6 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <motion.h1
+              className="font-display text-4xl font-bold text-ink tracking-tight sm:text-5xl"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
+            >
+              Welcome, {userName}!
+            </motion.h1>
+            <motion.p
+              className="mt-4 text-base text-ink-muted max-w-sm"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              Are you ready to supercharge your LinkedIn presence?
+            </motion.p>
+            <motion.button
+              type="button"
+              onClick={() => setShowWelcome(false)}
+              className="mt-8 inline-flex items-center gap-1.5 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.4 }}
+            >
+              Let&apos;s go →
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-10 sm:px-6">
 
       {/* Resume existing session card — shown above steps */}
@@ -253,5 +301,6 @@ export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverL
         </>
       )}
     </main>
+    </>
   );
 }

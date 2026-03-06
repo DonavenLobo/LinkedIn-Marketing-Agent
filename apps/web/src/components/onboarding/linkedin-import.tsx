@@ -111,13 +111,17 @@ export function LinkedInImport({ onImported, onSkip }: LinkedInImportProps) {
   const canSubmit = pasteText.trim().length > 0 || screenshots.length > 0;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+    <div className="relative rounded-xl border border-border bg-surface p-5 space-y-4">
+      {/* Full-component overlay when processing screenshots */}
+      {isUploading && screenshots.length > 0 && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-surface/80 backdrop-blur-sm">
+          <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-accent border-t-transparent" />
+          <p className="mt-3 text-sm font-semibold text-ink">Processing LinkedIn Screenshots...</p>
+          <p className="mt-1 text-xs text-ink-muted">Give us a minute!</p>
+        </div>
+      )}
       <div>
         <h3 className="text-sm font-semibold text-ink">Speed up your setup (optional)</h3>
-        <p className="mt-1 text-xs text-ink-muted">
-          Share some info from your LinkedIn profile so the agent already knows who you are.
-          Just copy-paste from your profile page, or upload screenshots — or both.
-        </p>
       </div>
 
       {error && (
@@ -125,7 +129,7 @@ export function LinkedInImport({ onImported, onSkip }: LinkedInImportProps) {
       )}
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-ink">Paste your profile info</label>
+        <label className="text-xs font-medium text-ink">Profile info</label>
         <textarea
           className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none resize-none"
           rows={8}
@@ -202,10 +206,15 @@ export function LinkedInImport({ onImported, onSkip }: LinkedInImportProps) {
           disabled={!canSubmit || isUploading}
           className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {isUploading ? (
+          {isUploading && screenshots.length === 0 ? (
             <span className="flex items-center justify-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Extracting profile info...
+            </span>
+          ) : isUploading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Processing...
             </span>
           ) : (
             "Continue with this info →"
