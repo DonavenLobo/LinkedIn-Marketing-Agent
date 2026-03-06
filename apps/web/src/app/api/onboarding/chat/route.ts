@@ -51,15 +51,28 @@ How they write their messages is often more revealing than what they say they pr
 function buildLinkedInContextSection(linkedInData: LinkedInImportData): string {
   const parts: string[] = ["## LINKEDIN CONTEXT (already imported)"];
   parts.push("You already know the following about this person. SKIP background and professional context questions — jump straight to voice calibration. Target 3-4 exchanges total.");
+
+  const name = [linkedInData.firstName, linkedInData.lastName].filter(Boolean).join(" ");
+  if (name) parts.push(`- Name: ${name}`);
   if (linkedInData.headline) parts.push(`- Headline: ${linkedInData.headline}`);
   if (linkedInData.industry) parts.push(`- Industry: ${linkedInData.industry}`);
-  if (linkedInData.positions?.[0]) {
-    const p = linkedInData.positions[0];
-    parts.push(`- Current role: ${p.title}${p.company ? ` at ${p.company}` : ""}`);
+
+  if (linkedInData.summary) {
+    parts.push(`- About/Summary: ${linkedInData.summary}`);
   }
+
+  if (linkedInData.positions?.length) {
+    parts.push(`- Work history:`);
+    for (const p of linkedInData.positions) {
+      const desc = p.description ? ` (${p.description})` : "";
+      parts.push(`    • ${p.title} at ${p.company}${desc}`);
+    }
+  }
+
   if (linkedInData.skills?.length) {
-    parts.push(`- Skills: ${linkedInData.skills.slice(0, 8).join(", ")}`);
+    parts.push(`- Skills: ${linkedInData.skills.join(", ")}`);
   }
+
   return parts.join("\n");
 }
 

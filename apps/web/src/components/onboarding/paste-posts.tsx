@@ -110,7 +110,7 @@ export function PastePostsOnboarding({ redirectTo, isRedo, userId }: PastePostsO
       ) : (
         <section className="flex flex-1 flex-col rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-6">
           <label className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">
-            Recent posts (optional)
+            Your recent posts (optional)
           </label>
           <p className="mb-3 text-xs text-ink-muted">
             Paste 3–10 posts if you can. Separate posts with a blank line or a line containing

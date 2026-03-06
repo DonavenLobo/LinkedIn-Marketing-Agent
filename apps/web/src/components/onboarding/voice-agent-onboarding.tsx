@@ -150,20 +150,32 @@ export function VoiceAgentOnboarding({ isRedo, linkedInData }: VoiceAgentOnboard
       }
 
       // Build LinkedIn context as a single dynamic variable for the agent system prompt
-      const hasLinkedIn = !!(linkedInData?.headline || linkedInData?.positions?.length);
-      const title = linkedInData?.positions?.[0]?.title ?? linkedInData?.headline ?? "";
-      const company = linkedInData?.positions?.[0]?.company ?? "";
+      const hasLinkedIn = !!(linkedInData?.headline || linkedInData?.positions?.length || linkedInData?.summary);
 
       let userContext = "";
       if (hasLinkedIn) {
         const parts = [
           "You already know the following about this person. SKIP background and professional context questions — jump straight to voice calibration. Target 3-4 exchanges total.",
         ];
-        if (linkedInData?.firstName) parts.push(`Name: ${linkedInData.firstName}${linkedInData?.lastName ? ` ${linkedInData.lastName}` : ""}`);
-        if (title) parts.push(`Current role: ${title}${company ? ` at ${company}` : ""}`);
+
+        const name = [linkedInData?.firstName, linkedInData?.lastName].filter(Boolean).join(" ");
+        if (name) parts.push(`Name: ${name}`);
         if (linkedInData?.headline) parts.push(`Headline: ${linkedInData.headline}`);
         if (linkedInData?.industry) parts.push(`Industry: ${linkedInData.industry}`);
-        if (linkedInData?.skills?.length) parts.push(`Skills: ${linkedInData.skills.slice(0, 8).join(", ")}`);
+        if (linkedInData?.summary) parts.push(`About/Summary: ${linkedInData.summary}`);
+
+        if (linkedInData?.positions?.length) {
+          parts.push(`Work history:`);
+          for (const p of linkedInData.positions) {
+            const desc = p.description ? ` (${p.description})` : "";
+            parts.push(`  - ${p.title} at ${p.company}${desc}`);
+          }
+        }
+
+        if (linkedInData?.skills?.length) {
+          parts.push(`Skills: ${linkedInData.skills.join(", ")}`);
+        }
+
         userContext = parts.join("\n");
       }
 

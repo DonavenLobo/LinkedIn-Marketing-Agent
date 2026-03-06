@@ -33,6 +33,7 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [chatKey, setChatKey] = useState(0);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const abortRef = useRef(false);
 
   // Tour state
@@ -116,6 +117,7 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
     setPostId(null);
     setTopic(newTopic);
     setIsStreaming(true);
+    setChatCollapsed(true);
     abortRef.current = false;
 
     try {
@@ -193,6 +195,17 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
         </div>
         {status === "ready" && (
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button
+              className="header-icon-btn"
+              onClick={() => window.open(`${API_URL}/create`, "_blank")}
+              title="Open web dashboard"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </button>
             <button
               className="tour-help-btn"
               onClick={() => setShowSidebarTour(true)}
@@ -278,11 +291,24 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <PostChat
-                key={chatKey}
-                onReadyToGenerate={handleGenerate}
-                isGenerating={isStreaming}
-              />
+              {(content || isStreaming) && (
+                <button
+                  className={`chat-history-toggle ${chatCollapsed ? "collapsed" : ""}`}
+                  onClick={() => setChatCollapsed(!chatCollapsed)}
+                >
+                  <span>Chat History</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              )}
+              <div className={`chat-section ${chatCollapsed ? "chat-section--collapsed" : ""}`}>
+                <PostChat
+                  key={chatKey}
+                  onReadyToGenerate={handleGenerate}
+                  isGenerating={isStreaming}
+                />
+              </div>
               {error && <div className="error-msg">{error}</div>}
               <PostPreview
                 content={content}
@@ -299,6 +325,7 @@ export function SidebarApp({ containerRef }: SidebarAppProps) {
                   setTopic("");
                   setError(null);
                   setChatKey((k) => k + 1);
+                  setChatCollapsed(false);
                   document.querySelector(".sidebar-content")?.scrollTo(0, 0);
                 }}
               />
