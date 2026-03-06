@@ -26,7 +26,7 @@ export function PastePostsOnboarding({ redirectTo, isRedo, userId }: PastePostsO
       .then((data: { session: OnboardingSession }) => {
         setSession(data.session);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const buildProfile = async (writingSamples?: string[]) => {
@@ -105,7 +105,7 @@ export function PastePostsOnboarding({ redirectTo, isRedo, userId }: PastePostsO
         <section className="flex flex-1 flex-col items-center justify-center rounded-xl border border-border bg-surface p-8 shadow-sm">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent mb-4" />
           <p className="text-sm font-medium text-ink">{buildPhase}</p>
-          <p className="mt-2 text-xs text-ink-muted">This usually takes 15-30 seconds.</p>
+          <p className="mt-2 text-xs text-ink-muted">This usually takes a couple minutes!</p>
         </section>
       ) : (
         <section className="flex flex-1 flex-col rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-6">

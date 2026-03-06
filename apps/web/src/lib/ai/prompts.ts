@@ -9,7 +9,7 @@ export const LINKEDIN_POST_PRINCIPLES = `
 LINKEDIN PLATFORM PRINCIPLES (text posts only):
 
 LENGTH & THE "SEE MORE" FOLD
-- Sweet spot: 1,200-1,800 characters (~200-300 words). Over 2,000 sees diminishing returns; max is 3,000.
+- Sweet spot: 600-900 characters (~100-150 words). Short and punchy wins — do not pad.
 - The first ~210 characters appear before the "See more" button. This is your most valuable real estate. Treat it like a headline — it must earn the click.
 
 HOOK FORMULAS (pick one that fits the topic and voice):
@@ -171,6 +171,7 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile, brandGuidelines?: 
     "- Write ONLY the post text. No titles, labels, or meta-commentary.",
     "- Sound human and authentic, never robotic or corporate.",
     "- NEVER use em dashes (— or –). They are a dead giveaway of AI writing. Use a comma, period, or rewrite the sentence instead.",
+    "- NEVER include hashtags in the post. Hashtags are added separately after the user approves the post.",
   );
 
   return parts.join("\n");

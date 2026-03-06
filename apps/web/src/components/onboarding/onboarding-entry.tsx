@@ -38,10 +38,10 @@ function StepIndicator({ current }: { current: Step }) {
           <div className="flex items-center gap-2">
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${i < currentIdx
+                ? "bg-accent text-white"
+                : i === currentIdx
                   ? "bg-accent text-white"
-                  : i === currentIdx
-                    ? "bg-accent text-white"
-                    : "bg-surface-muted text-ink-muted"
+                  : "bg-surface-muted text-ink-muted"
                 }`}
             >
               {i < currentIdx ? (
@@ -153,7 +153,7 @@ export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverL
             </h1>
             <p className="mt-2 text-sm text-ink-muted max-w-xl">
               Share some info from your LinkedIn profile so the agent already knows who you are.
-              Just copy-paste from your profile page, or upload a couple of screenshots — takes 30 seconds.
+              Just copy-paste from your profile page, or upload a couple of screenshots.
             </p>
           </header>
 
@@ -179,7 +179,7 @@ export function OnboardingEntry({ isRedo, existingSession, linkedInData: serverL
             </h1>
             <p className="mt-2 text-sm text-ink-muted max-w-xl">
               {hasLinkedIn
-                ? "We already know the basics from your LinkedIn profile. Now we just need to hear how you talk — pick whichever method feels natural."
+                ? "We already know the basics from your LinkedIn profile. Now, we just need to hear how you talk — pick whichever method feels natural."
                 : "Speak with the voice agent or type through a short chat. Either way, your profile will power every post we write for you."}
             </p>
           </header>

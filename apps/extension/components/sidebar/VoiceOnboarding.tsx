@@ -46,18 +46,18 @@ function VoicePulseRings({ isSpeaking }: { isSpeaking: boolean }) {
           animate={
             isSpeaking
               ? {
-                  scale: [1, 1.08 + i * 0.04, 1],
-                  opacity: [0.4 - i * 0.1, 0.15 - i * 0.03, 0.4 - i * 0.1],
-                }
+                scale: [1, 1.08 + i * 0.04, 1],
+                opacity: [0.4 - i * 0.1, 0.15 - i * 0.03, 0.4 - i * 0.1],
+              }
               : { scale: 1, opacity: 0.12 }
           }
           transition={
             isSpeaking
               ? {
-                  duration: 1.6 + i * 0.3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }
+                duration: 1.6 + i * 0.3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }
               : { duration: 0.4 }
           }
         />
@@ -106,7 +106,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         const data = await res.json();
         setUserId(data.user?.id || null);
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
     apiFetch("/api/onboarding/session").then(async (res) => {
       if (res.ok) {
@@ -117,7 +117,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           setIsResuming(true);
         }
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const schedulePatch = useCallback((updatedTranscript: TranscriptMessage[], turnCount: number) => {
@@ -133,7 +133,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           turn_count: turnCount,
           mode: "voice",
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }, PATCH_DEBOUNCE_MS);
   }, []);
 
@@ -193,7 +193,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
               transcript: transcriptStateRef.current,
               turn_count: transcriptStateRef.current.filter((m) => m.role === "user").length,
             }),
-          }).catch(() => {});
+          }).catch(() => { });
         }
         setPhase("writing-samples");
         try { await conversation.endSession(); } catch { /* ignore */ }
@@ -245,7 +245,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
           transcript,
           turn_count: transcript.filter((m) => m.role === "user").length,
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }
     try { await conversation.endSession(); } catch { /* ignore */ }
     if (transcript.length >= 6) {
@@ -301,7 +301,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
       apiFetch("/api/onboarding/session", {
         method: "DELETE",
         body: JSON.stringify({ sessionId: s.id }),
-      }).catch(() => {});
+      }).catch(() => { });
     }
     setSession(null);
     setTranscript([]);
@@ -314,7 +314,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         const data = await res.json();
         setSession(data.session);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const getWebContinueUrl = () => {
@@ -513,7 +513,7 @@ export function VoiceOnboarding({ onComplete, onFallbackToWeb }: VoiceOnboarding
         <div className="voice-hero">
           <div className="spinner" style={{ width: 24, height: 24 }} />
           <h2>Building your voice profile...</h2>
-          <p>This usually takes 15-30 seconds.</p>
+          <p>This usually takes a couple minutes!</p>
         </div>
       </motion.div>
     );
