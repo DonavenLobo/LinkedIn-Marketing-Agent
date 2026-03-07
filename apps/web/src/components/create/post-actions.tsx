@@ -12,6 +12,7 @@ interface PostActionsProps {
   postId: string | null;
   topic: string;
   onRegenerate: () => void;
+  onStartAnotherDraft: () => void;
   onContentUpdate: (newContent: string) => void;
 }
 
@@ -20,6 +21,7 @@ export function PostActions({
   postId,
   topic,
   onRegenerate,
+  onStartAnotherDraft,
   onContentUpdate,
 }: PostActionsProps) {
   const [mode, setMode] = useState<Mode>("preview");
@@ -177,6 +179,12 @@ export function PostActions({
       {approved && postId && (
         <HashtagSuggestions postContent={content} postId={postId} onHashtagsLoaded={setHashtags} />
       )}
+      <button
+        onClick={onStartAnotherDraft}
+        className="w-full rounded-md border border-border px-4 py-2.5 text-sm font-medium text-ink-light hover:bg-surface-subtle transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Start another draft
+      </button>
     </div>
   );
 }

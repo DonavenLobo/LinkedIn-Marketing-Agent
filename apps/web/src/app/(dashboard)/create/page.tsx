@@ -162,6 +162,7 @@ export default function CreatePage() {
                   postId={resolvedPostId}
                   topic={topic}
                   onRegenerate={handleRegenerate}
+                  onStartAnotherDraft={handleReset}
                   onContentUpdate={(newContent) => {
                     setDisplayContent(newContent);
                     setCompletion(newContent);

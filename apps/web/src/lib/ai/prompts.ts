@@ -10,7 +10,10 @@ export function buildSystemPrompt(voiceProfile: VoiceProfile, brandGuidelines?: 
   const normalized = normalizeVoiceProfile(voiceProfile);
   const instructionPack = normalized.generation_instruction_pack || compileGenerationInstructionPack(normalized);
 
-  const parts = [instructionPack];
+  const parts = [
+    instructionPack,
+    `<global_non_negotiables>\n- NEVER use em dashes (— or –). They are an obvious AI tell for this product. Use a comma, a period, or rewrite the sentence.\n</global_non_negotiables>`,
+  ];
 
   if (brandGuidelines?.trim()) {
     parts.push(

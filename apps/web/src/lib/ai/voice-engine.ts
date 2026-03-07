@@ -641,6 +641,7 @@ export function compileGenerationInstructionPack(profile: VoiceProfile): string 
     `<output_contract>`,
     `- Output only the post text. No labels or commentary.`,
     `- Sound like the user on a strong day: specific, credible, and human.`,
+    `- NEVER use em dashes (— or –). Use a comma, a period, or rewrite the sentence.`,
     `- If voice rules conflict with platform defaults, voice rules win.`,
     `- If learned defaults conflict with platform defaults, learned defaults win.`,
     `- Hashtags, if used at all, belong at the end.`,

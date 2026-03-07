@@ -23,7 +23,7 @@ export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: P
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasTriggeredRef = useRef(false);
 
-  const { messages, input, setInput, handleSubmit, append, status } = useChat({
+  const { messages, input, setInput, handleSubmit, append, status, data } = useChat({
     api: "/api/post/chat",
     maxSteps: 1,
   });
@@ -42,6 +42,22 @@ export function PostChat({ onReadyToGenerate, onReset, onStop, isGenerating }: P
     },
     [onReadyToGenerate]
   );
+
+  useEffect(() => {
+    if (hasTriggeredRef.current || !Array.isArray(data)) return;
+
+    const enrichedTopic = data.findLast(
+      (item): item is { enrichedTopic: string } =>
+        typeof item === "object" &&
+        item !== null &&
+        "enrichedTopic" in item &&
+        typeof (item as { enrichedTopic?: unknown }).enrichedTopic === "string"
+    )?.enrichedTopic;
+
+    if (enrichedTopic) {
+      handleGenerate(enrichedTopic);
+    }
+  }, [data, handleGenerate]);
 
   useEffect(() => {
     if (hasTriggeredRef.current) return;
