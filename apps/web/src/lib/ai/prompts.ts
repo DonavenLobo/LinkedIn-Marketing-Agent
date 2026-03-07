@@ -1,198 +1,54 @@
-import type { VoiceProfile, PostInteraction } from "@linkedin-agent/shared";
-
-/**
- * Research-backed best practices for effective LinkedIn text posts.
- * Injected into the system prompt as platform strategy guidance.
- * NOTE: Voice profile settings (emojis, tone, etc.) always take precedence over these principles.
- */
-export const LINKEDIN_POST_PRINCIPLES = `
-LINKEDIN PLATFORM PRINCIPLES (text posts only):
-
-LENGTH & THE "SEE MORE" FOLD
-- Sweet spot: 600-900 characters (~100-150 words). Short and punchy wins — do not pad.
-- The first ~210 characters appear before the "See more" button. This is your most valuable real estate. Treat it like a headline — it must earn the click.
-
-HOOK FORMULAS (pick one that fits the topic and voice):
-- Surprising stat or data point: lead with a number that challenges assumptions
-- Contrarian take: "Everything you've been told about X is wrong"
-- Personal story opener: "I got fired 3 years ago..." (specific, vulnerable, immediate)
-- Direct question: "What's the one thing you'd change about X?"
-- Bold declarative claim: "You don't need a content calendar. You need a content philosophy."
-
-STRUCTURE & MOBILE FORMATTING
-- Front-load the key message in the first 2-3 lines
-- Short paragraphs: 1-2 sentences max, with a blank line between each
-- Short sentences: aim for under 12 words for scanability on mobile
-- White space is your friend — even long posts should feel light and airy
-- Simple, accessible language; no jargon unless the audience genuinely expects it
-
-CALLS TO ACTION
-- Question-based: "What's your biggest challenge with [topic]?"
-- Debate-sparking: "Agree or disagree? Drop your take below."
-- Low-friction: "Drop a comment if this resonates"
-- CTAs should feel conversational and natural, never salesy or transactional
-
-HASHTAGS
-- Place hashtags at the very end of the post, never scattered throughout the body
-- Avoid generic engagement hashtags (#Follow, #Like, #Comment)
-
-ANTI-PATTERNS (never do these)
-- Never open with "I'm excited to announce..." — it's the most overused phrase on LinkedIn
-- Never include external links in the post body (LinkedIn's algorithm suppresses reach for outbound links)
-- Never write walls of text with no line breaks
-- Storytelling and personal lessons outperform generic business advice — humanize the message`.trim();
-
-/**
- * Anti-AI pattern rules derived from the humanizer skill.
- * Based on Wikipedia's "Signs of AI writing" guide (24 distinct patterns).
- * Injected near the end of buildSystemPrompt(), after all voice and brand constraints.
- * Voice profile rules appear earlier in the prompt; if a user's authentic phrasing
- * naturally uses a banned word, handle it via voice_profile.avoid_phrases to override.
- */
-export const HUMANIZER_ANTI_AI_PATTERNS = `
-ANTI-AI WRITING RULES (these apply to all posts — if they conflict with the user's authentic voice style captured above, voice wins):
-
-BANNED VOCABULARY — never use these words or phrases:
-- "landscape" (the competitive landscape, the current landscape)
-- "delve" or "delve into"
-- "tapestry"
-- "showcase" (use "show" or "demonstrate")
-- "furthermore" or "moreover" (just start a new sentence)
-- "testament" ("a testament to" → just say what it shows)
-- "pivotal" (use "key," "critical," or just cut it)
-- "realm"
-- "interplay"
-- "it's worth noting" or "it is worth noting"
-- "game-changer" or "game changer"
-- "transformative" (just say what actually changed)
-- "navigate" as a metaphor ("navigate challenges," "navigate the market")
-- "paradigm" or "paradigm shift"
-- "multifaceted"
-- "in today's [X] world" or "in today's fast-paced environment"
-- "at the end of the day"
-- "the bottom line is"
-- "needless to say"
-- "it goes without saying"
-
-NO VAGUE ATTRIBUTIONS — never write "studies show," "research suggests," or "experts say" without naming a specific source. If you can't name it, cut the attribution and just state the point.
-
-NO COPULA AVOIDANCE — say what things ARE, not what they "serve as" or "act as":
-- Wrong: "This serves as a reminder that..."
-- Right: "This is a reminder that..." or just "Remember that..."
-
-NO FORCED PARALLELISMS:
-- No "not just X, but Y" constructions
-- No forcing three items into a list when two or four fit better
-- No false ranges like "anywhere from X to Y" — just give the number
-
-NO GENERIC CLOSINGS — never end with:
-- "It's an exciting time to be in [industry]"
-- "The future is bright"
-- "Only time will tell"
-- "What a time to be alive"
-- Generic inspirational platitudes
-
-NO INLINE BOLD HEADERS — do not write "**Key takeaway:** ..." or "**Bottom line:** ..." mid-post as a pseudo-header. Either bold nothing or bold a word for genuine emphasis.
-
-VARIED SENTENCE RHYTHM — mix short sentences with longer ones. A post where every sentence is 10-15 words long sounds like a robot. Break the pattern intentionally.
-
-SPECIFIC OVER GENERIC — replace vague language with real details:
-- Not "significant growth" → "revenue up 40% in 18 months"
-- Not "a major challenge" → name the actual challenge
-- Not "leading firm" → name the firm if you can, or just say "a firm"
-`.trim();
+import type { PostInteraction, VoiceProfile } from "@linkedin-agent/shared";
+import { buildExemplarPrompt, buildLearningContext as buildStructuredLearningContext, compileGenerationInstructionPack, normalizeVoiceProfile } from "./voice-engine";
+export { HUMANIZER_ANTI_AI_PATTERNS, LINKEDIN_POST_PRINCIPLES } from "./prompt-constants";
 
 /**
  * Builds the system prompt for post generation.
- * This is the key module to iterate on — currently uses the voice profile's
- * stored system_prompt plus few-shot examples from sample_posts.
- *
- * Future: accept a "case folder" of curated tone/voice examples.
+ * Prefers the v2 compiled instruction pack and falls back to a derived pack if needed.
  */
 export function buildSystemPrompt(voiceProfile: VoiceProfile, brandGuidelines?: string | null): string {
-  const parts: string[] = [];
+  const normalized = normalizeVoiceProfile(voiceProfile);
+  const instructionPack = normalized.generation_instruction_pack || compileGenerationInstructionPack(normalized);
 
-  // Use the AI-generated system prompt from onboarding
-  if (voiceProfile.system_prompt) {
-    parts.push(voiceProfile.system_prompt);
-  } else {
-    // Fallback if no system prompt exists
-    parts.push(
-      `You are a LinkedIn ghostwriter. Write posts that sound like this person:`,
-      `Tone: ${voiceProfile.tone_description || "professional and authentic"}`,
-      `Style: ${voiceProfile.formality || "balanced"}`,
-      `Traits: ${voiceProfile.personality_traits?.join(", ") || "professional"}`
-    );
-  }
+  const parts = [instructionPack];
 
-  // Formatting instructions
-  const fmt = voiceProfile.formatting_preferences;
-  const formatInstructions: string[] = [];
-  if (fmt?.uses_emojis === false) formatInstructions.push("Do NOT use emojis.");
-  if (fmt?.uses_emojis === true) formatInstructions.push("Use emojis sparingly for emphasis.");
-  if (fmt?.line_break_style === "spaced") formatInstructions.push("Use line breaks between ideas for readability.");
-  if (fmt?.line_break_style === "dense") formatInstructions.push("Keep paragraphs together, minimal line breaks.");
-  if (fmt?.uses_hashtags === true) formatInstructions.push(`Include ${fmt.hashtag_count || 3} relevant hashtags at the end.`);
-  if (fmt?.uses_hashtags === false) formatInstructions.push("Do NOT include hashtags.");
-
-  if (formatInstructions.length > 0) {
-    parts.push("\nFORMATTING:\n" + formatInstructions.join("\n"));
-  }
-
-  // Phrases to avoid
-  if (voiceProfile.avoid_phrases?.length > 0) {
-    parts.push(
-      `\nNEVER use these phrases: ${voiceProfile.avoid_phrases.join(", ")}`
-    );
-  }
-
-  // Signature phrases to incorporate naturally
-  if (voiceProfile.signature_phrases?.length > 0) {
-    parts.push(
-      `\nNaturally incorporate phrases like: ${voiceProfile.signature_phrases.join(", ")}`
-    );
-  }
-
-  // Brand & company guidelines (user-defined guardrails)
   if (brandGuidelines?.trim()) {
     parts.push(
-      `\nBRAND & COMPANY GUIDELINES (follow these rules while maintaining the user's authentic voice):\n${brandGuidelines.trim()}`
+      `<brand_guidelines>\n${brandGuidelines.trim()}\nHonor these business guardrails while preserving the user's authentic voice.\n</brand_guidelines>`,
     );
   }
 
-  // Platform strategy principles (voice profile rules above take precedence)
-  parts.push(`\n${LINKEDIN_POST_PRINCIPLES}`);
-
-  // Anti-AI pattern cleanup (lowest priority — voice profile rules above take precedence)
-  parts.push(`\n${HUMANIZER_ANTI_AI_PATTERNS}`);
-
-  parts.push(
-    "\nIMPORTANT RULES:",
-    "- Write ONLY the post text. No titles, labels, or meta-commentary.",
-    "- Sound human and authentic, never robotic or corporate.",
-    "- NEVER use em dashes (— or –). They are a dead giveaway of AI writing. Use a comma, period, or rewrite the sentence instead.",
-    "- NEVER include hashtags in the post. Hashtags are added separately after the user approves the post.",
-  );
-
-  return parts.join("\n");
+  return parts.join("\n\n");
 }
 
 /**
- * Builds the user prompt with topic, optional few-shot examples, and optional learning context.
+ * Builds the user prompt with topic, curated few-shot examples, and recent learning.
  */
 export function buildUserPrompt(
   topic: string,
-  samplePosts: string[],
-  learningContext?: string
+  voiceProfileOrSamplePosts: VoiceProfile | string[],
+  learningContext?: string,
 ): string {
   const parts: string[] = [];
 
-  if (samplePosts.length > 0) {
-    parts.push("Here are examples of posts in my voice:\n");
-    samplePosts.forEach((post, i) => {
-      parts.push(`Example ${i + 1}:\n${post}\n`);
-    });
-    parts.push("---\n");
+  if (Array.isArray(voiceProfileOrSamplePosts)) {
+    const samplePosts = voiceProfileOrSamplePosts.filter((post) => post.trim().length > 0);
+    if (samplePosts.length > 0) {
+      parts.push("<voice_examples>");
+      samplePosts.slice(0, 4).forEach((post) => {
+        parts.push(
+          "Prompt: Write a LinkedIn post in this person's voice.",
+          `Response:\n${post}`,
+          "",
+        );
+      });
+      parts.push("</voice_examples>");
+    }
+  } else {
+    const exemplarPrompt = buildExemplarPrompt(voiceProfileOrSamplePosts);
+    if (exemplarPrompt) {
+      parts.push(exemplarPrompt);
+    }
   }
 
   if (learningContext) {
@@ -200,52 +56,17 @@ export function buildUserPrompt(
   }
 
   parts.push(
-    `Write a LinkedIn post about the following topic: ${topic}`
+    `<task>\nWrite a LinkedIn post about the following topic or request:\n${topic}\n</task>`,
   );
 
-  return parts.join("\n");
+  return parts.join("\n\n");
 }
 
 /**
- * Transforms recent post interactions into a few-shot learning context block.
- * Injected into buildUserPrompt so approved posts, feedback revisions, and edits
- * progressively improve voice mimicking over time.
+ * Re-export the structured learning-context builder so existing routes can keep the same import.
  */
 export function buildLearningContext(interactions: PostInteraction[]): string {
-  if (interactions.length === 0) return "";
-
-  const parts: string[] = [
-    "--- VOICE LEARNING FROM PAST INTERACTIONS ---",
-    "The user has provided feedback on previous posts. Use these signals to better match their voice:\n",
-  ];
-
-  for (const interaction of interactions.slice(0, 8)) {
-    switch (interaction.interaction_type) {
-      case "approve":
-        parts.push(
-          `APPROVED POST (the user was happy with this — match this style and tone):\n${interaction.final_text}\n`
-        );
-        break;
-      case "feedback":
-        parts.push(
-          `FEEDBACK EXAMPLE:\n` +
-          `Original draft: ${interaction.original_text}\n` +
-          `User's feedback: "${interaction.feedback_text}"\n` +
-          `Revised version they accepted: ${interaction.final_text}\n`
-        );
-        break;
-      case "edit":
-        parts.push(
-          `EDIT EXAMPLE (the user manually changed the text — pay close attention to what they changed and why):\n` +
-          `AI wrote: ${interaction.original_text}\n` +
-          `User changed it to: ${interaction.final_text}\n`
-        );
-        break;
-    }
-  }
-
-  parts.push("--- END VOICE LEARNING ---\n");
-  return parts.join("\n");
+  return buildStructuredLearningContext(interactions);
 }
 
 /**
@@ -283,13 +104,13 @@ RULES:
 export function buildFeedbackPrompt(
   currentText: string,
   feedback: string,
-  topic: string
+  topic: string,
 ): string {
   return [
-    `Here is a LinkedIn post I generated about: ${topic}\n`,
-    `Current version:\n${currentText}\n`,
-    `The user wants these changes: "${feedback}"\n`,
-    `Rewrite the post incorporating their feedback while keeping the same topic and core message.`,
-    `Write ONLY the revised post text. No commentary, labels, or explanation.`,
-  ].join("\n");
+    `<task_context>\nOriginal topic/request:\n${topic}\n</task_context>`,
+    `<current_draft>\n${currentText}\n</current_draft>`,
+    `<user_feedback>\n${feedback}\n</user_feedback>`,
+    "Rewrite the post to honor the user's feedback while keeping the same topic and core message.",
+    "Write ONLY the revised post text. No commentary, labels, or explanation.",
+  ].join("\n\n");
 }

@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
   const learningContext = buildLearningContext((interactions as PostInteraction[]) || []);
   const systemPrompt = buildSystemPrompt(voiceProfile, userProfile?.brand_guidelines);
-  const userPrompt = buildUserPrompt(topic, voiceProfile.sample_posts || [], learningContext);
+  const userPrompt = buildUserPrompt(topic, voiceProfile, learningContext);
 
   // StreamData lets us send the saved post's ID back to the client
   const streamData = new StreamData();

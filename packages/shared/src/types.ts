@@ -11,6 +11,89 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export type VoiceConfidence = "high" | "medium" | "low";
+export type VoiceProfileVersion = "v1" | "v2";
+export type VoicePreferenceKey =
+  | "post_length"
+  | "paragraph_density"
+  | "structure_style"
+  | "hook_style"
+  | "cta_style"
+  | "directness"
+  | "storytelling_style";
+export type VoiceExemplarSource = "user_post" | "approved_post" | "edited_post" | "generated_post";
+export type PreferenceSignalSource = "feedback" | "edit";
+
+export interface FormattingPreferences {
+  uses_emojis?: boolean;
+  line_break_style?: "dense" | "spaced" | "mixed";
+  uses_hashtags?: boolean;
+  hashtag_count?: number;
+}
+
+export interface VoiceRule {
+  rule: string;
+  confidence: VoiceConfidence;
+  evidence?: string;
+}
+
+export interface CoreVoiceProfile {
+  tone_summary: string;
+  audience_and_intent: string;
+  sentence_style_rules: VoiceRule[];
+  vocabulary_rules: VoiceRule[];
+  punctuation_rules: VoiceRule[];
+  structure_rules: VoiceRule[];
+  hook_rules: VoiceRule[];
+  cta_rules: VoiceRule[];
+  formatting_rules: VoiceRule[];
+  anti_pattern_rules: VoiceRule[];
+  personality_traits: string[];
+  signature_phrases: string[];
+  avoid_phrases: string[];
+  formality: "casual" | "balanced" | "formal";
+  formatting_preferences: FormattingPreferences;
+}
+
+export interface VoiceExemplar {
+  id: string;
+  text: string;
+  source_type: VoiceExemplarSource;
+  topic?: string | null;
+  usage_note?: string | null;
+  quality_score: number;
+  created_at: string;
+}
+
+export interface VoicePreferenceSignal {
+  key: VoicePreferenceKey;
+  value: string;
+  label: string;
+  evidence: string;
+  source: PreferenceSignalSource;
+}
+
+export interface LearnedPreference {
+  key: VoicePreferenceKey;
+  value: string;
+  label: string;
+  evidence_count: number;
+  promoted: boolean;
+  scope: "global";
+  examples: string[];
+  source_types: PreferenceSignalSource[];
+  first_seen_at: string;
+  last_seen_at: string;
+}
+
+export interface VoiceProfileStats {
+  onboarding_sample_count: number;
+  user_post_count: number;
+  approved_post_count: number;
+  edited_post_count: number;
+  last_distilled_at: string | null;
+}
+
 export interface VoiceProfile {
   id: string;
   user_id: string;
@@ -24,16 +107,15 @@ export interface VoiceProfile {
   formatting_preferences: FormattingPreferences;
   sample_posts: string[];
   system_prompt: string | null;
+  voice_profile_version: VoiceProfileVersion | null;
+  core_voice_profile: CoreVoiceProfile | null;
+  exemplar_posts: VoiceExemplar[];
+  learned_preferences: LearnedPreference[];
+  generation_instruction_pack: string | null;
+  profile_stats: VoiceProfileStats | null;
   onboarding_answers: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-}
-
-export interface FormattingPreferences {
-  uses_emojis?: boolean;
-  line_break_style?: "dense" | "spaced" | "mixed";
-  uses_hashtags?: boolean;
-  hashtag_count?: number;
 }
 
 export interface GeneratedPost {
@@ -58,6 +140,7 @@ export interface PostInteraction {
   feedback_text: string | null;
   original_text: string | null;
   revision_count: number;
+  interaction_signals: VoicePreferenceSignal[] | null;
   created_at: string;
 }
 
@@ -153,7 +236,12 @@ export interface Database {
       };
       post_interactions: {
         Row: PostInteraction;
-        Insert: Partial<PostInteraction> & { user_id: string; generated_post_id: string; interaction_type: PostInteraction["interaction_type"]; final_text: string };
+        Insert: Partial<PostInteraction> & {
+          user_id: string;
+          generated_post_id: string;
+          interaction_type: PostInteraction["interaction_type"];
+          final_text: string;
+        };
         Update: Partial<PostInteraction>;
       };
     };

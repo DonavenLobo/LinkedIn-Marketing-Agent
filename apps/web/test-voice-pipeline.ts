@@ -234,6 +234,12 @@ WRITING RULES:
       .filter((m) => m.role === "user" && m.content.length > 100)
       .map((m) => m.content),
     system_prompt: (voiceData.system_prompt as string) ?? null,
+    voice_profile_version: "v2",
+    core_voice_profile: null,
+    exemplar_posts: [],
+    learned_preferences: [],
+    generation_instruction_pack: null,
+    profile_stats: null,
     onboarding_answers: {},
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
