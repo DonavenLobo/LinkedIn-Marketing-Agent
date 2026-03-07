@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 interface HashtagSuggestionsProps {
   postContent: string;
   postId: string;
+  onHashtagsLoaded?: (tags: string[]) => void;
 }
 
-export function HashtagSuggestions({ postContent, postId: _postId }: HashtagSuggestionsProps) {
+export function HashtagSuggestions({ postContent, postId: _postId, onHashtagsLoaded }: HashtagSuggestionsProps) {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedAll, setCopiedAll] = useState(false);
@@ -19,7 +20,11 @@ export function HashtagSuggestions({ postContent, postId: _postId }: HashtagSugg
       body: JSON.stringify({ post_content: postContent }),
     })
       .then((r) => r.json())
-      .then((data) => setHashtags(data.hashtags ?? []))
+      .then((data) => {
+        const tags = data.hashtags ?? [];
+        setHashtags(tags);
+        onHashtagsLoaded?.(tags);
+      })
       .finally(() => setIsLoading(false));
   }, [postContent]);
 

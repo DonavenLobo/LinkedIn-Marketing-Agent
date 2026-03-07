@@ -26,6 +26,8 @@ export function PostActions({
   const [approved, setApproved] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [includeHashtags, setIncludeHashtags] = useState(false);
   const currentContentRef = useRef(content);
   currentContentRef.current = content;
 
@@ -60,7 +62,10 @@ export function PostActions({
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
+    const text = includeHashtags && hashtags.length > 0
+      ? `${content}\n\n${hashtags.join(" ")}`
+      : content;
+    await navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
   };
 
@@ -140,12 +145,25 @@ export function PostActions({
         </button>
       </div>
       {approved && (
-        <button
-          onClick={handleCopy}
-          className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Copy
-        </button>
+        <>
+          {hashtags.length > 0 && (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeHashtags}
+                onChange={(e) => setIncludeHashtags(e.target.checked)}
+                className="h-3.5 w-3.5 rounded accent-accent cursor-pointer"
+              />
+              <span className="text-xs text-ink-muted">Include hashtags in copy</span>
+            </label>
+          )}
+          <button
+            onClick={handleCopy}
+            className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Copy
+          </button>
+        </>
       )}
       <button
         onClick={onRegenerate}
@@ -157,7 +175,7 @@ export function PostActions({
         <p className="text-xs text-ink-muted text-center">Approve/Feedback require the post to finish saving...</p>
       )}
       {approved && postId && (
-        <HashtagSuggestions postContent={content} postId={postId} />
+        <HashtagSuggestions postContent={content} postId={postId} onHashtagsLoaded={setHashtags} />
       )}
     </div>
   );

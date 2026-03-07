@@ -31,6 +31,7 @@ export function PostPreview({
   const [approved, setApproved] = useState(false);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagsLoading, setHashtagsLoading] = useState(false);
+  const [includeHashtags, setIncludeHashtags] = useState(false);
   const [mode, setMode] = useState<Mode>("preview");
   const [feedbackText, setFeedbackText] = useState("");
   const [editText, setEditText] = useState("");
@@ -42,7 +43,10 @@ export function PostPreview({
   if (!content && !isStreaming) return null;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
+    const text = includeHashtags && hashtags.length > 0
+      ? `${content}\n\n${hashtags.join(" ")}`
+      : content;
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -92,7 +96,7 @@ export function PostPreview({
   };
 
   const handleInsertToLinkedIn = () => {
-    const fullText = hashtags.length > 0
+    const fullText = includeHashtags && hashtags.length > 0
       ? content + "\n\n" + hashtags.join(" ")
       : content;
     const htmlContent = `<p>${fullText.replace(/\n/g, "</p><p>")}</p>`;
@@ -241,6 +245,13 @@ export function PostPreview({
             {mode === "preview" && (
               <>
                 <div className="post-actions">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => { setMode("feedback"); setFeedbackText(""); setApproved(false); }}
+                    disabled={!postId}
+                  >
+                    Feedback
+                  </button>
                   <motion.button
                     className="btn-approve"
                     onClick={handleApprove}
@@ -250,20 +261,26 @@ export function PostPreview({
                   >
                     {approved ? "Approved" : "Approve"}
                   </motion.button>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => { setMode("feedback"); setFeedbackText(""); setApproved(false); }}
-                    disabled={!postId}
-                  >
-                    Feedback
-                  </button>
                 </div>
                 {approved && (
-                  <div className="post-actions" style={{ marginTop: 6 }}>
-                    <button className="btn-primary" style={{ flex: 1 }} onClick={handleCopy}>
-                      {copied ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
+                  <>
+                    {hashtags.length > 0 && (
+                      <label className="hashtag-toggle-label">
+                        <input
+                          type="checkbox"
+                          checked={includeHashtags}
+                          onChange={(e) => setIncludeHashtags(e.target.checked)}
+                          className="hashtag-toggle-checkbox"
+                        />
+                        Include hashtags in copy &amp; insert
+                      </label>
+                    )}
+                    <div className="post-actions" style={{ marginTop: 6 }}>
+                      <button className="btn-primary" style={{ flex: 1 }} onClick={handleCopy}>
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </>
                 )}
                 <button className="btn-new-post" onClick={handleNewPost}>
                   New Post
