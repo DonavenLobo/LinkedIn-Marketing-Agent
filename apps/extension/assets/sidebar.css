@@ -503,9 +503,9 @@
 @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
 
 /* Quick idea chips */
-.quick-ideas { margin-top: 10px; margin-bottom: 14px; }
+.quick-ideas { margin-top: 10px; margin-bottom: 14px; overflow: visible; }
 .quick-ideas-label { font-size: 10px; font-weight: 600; color: var(--ink-muted); letter-spacing: 0.05em; margin: 0 0 6px 0; }
-.quick-ideas-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-ideas-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px; margin: -2px; overflow: visible; }
 .chip { padding: 4px 10px; background: transparent; border: 1px solid var(--border); border-radius: 24px; font-size: 12px; font-family: 'DM Sans', system-ui, sans-serif; color: var(--ink-light); cursor: pointer; transition: all 0.15s; }
 .chip:hover { border-color: var(--ink); color: var(--ink); }
 .chip:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -918,7 +918,7 @@
   width: 380px;
   height: 100vh;
   z-index: 999999;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .tour-mask {
@@ -927,7 +927,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .tour-spotlight-ring {
@@ -944,6 +944,7 @@
   max-width: 340px;
   min-width: 200px;
   z-index: 1000000;
+  pointer-events: auto;
 }
 
 .tour-popover-header {

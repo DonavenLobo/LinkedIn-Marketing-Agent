@@ -20,8 +20,10 @@ STRUCTURE & MOBILE READABILITY
 - Lead with the strongest insight, then expand.
 
 CALLS TO ACTION
+- By default, include a call to action in the closing lines of the first generated draft.
 - Favor low-friction CTAs: a direct question, an invitation to weigh in, or a conversational prompt.
 - CTAs should feel natural, not salesy.
+- Only omit the CTA if the user explicitly asks to omit it or if saved learned preferences indicate they consistently do not want one.
 
 HASHTAGS
 - If used, place them at the very end of the post.

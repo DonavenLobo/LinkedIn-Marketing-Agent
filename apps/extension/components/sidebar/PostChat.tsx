@@ -189,7 +189,7 @@ export function PostChat({ onReadyToGenerate, isGenerating }: PostChatProps) {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: 0.15 + i * 0.05 }}
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
               >
                 {idea}
