@@ -1145,13 +1145,14 @@
 
 .chat-section {
   max-height: 2000px;
-  overflow: hidden;
+  overflow: visible;
   transition: max-height 0.3s ease, opacity 0.2s ease;
   opacity: 1;
 }
 
 .chat-section--collapsed {
   max-height: 0;
+  overflow: hidden;
   opacity: 0;
   margin: 0;
 }
