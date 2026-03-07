@@ -282,9 +282,6 @@ export function PostPreview({
                     </div>
                   </>
                 )}
-                <button className="btn-new-post" onClick={handleNewPost}>
-                  New Post
-                </button>
               </>
             )}
           </motion.div>
@@ -386,6 +383,22 @@ export function PostPreview({
             {insertError && (
               <p className="insert-error">{insertError}</p>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {content && !isStreaming && mode === "preview" && (
+          <motion.div
+            className="post-actions-area"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <button className="btn-new-post" onClick={handleNewPost}>
+              New Post
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

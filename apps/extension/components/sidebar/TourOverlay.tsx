@@ -63,6 +63,7 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
   const measureTarget = useCallback(() => {
     if (!containerEl || !step) return;
     const el = containerEl.querySelector(step.selector);
+    const contentEl = containerEl.querySelector(".sidebar-content") as HTMLElement | null;
 
     hasMeasuredRef.current = true;
 
@@ -72,19 +73,26 @@ export function TourOverlay({ steps, onComplete, containerEl }: TourOverlayProps
       return;
     }
 
-    // Scroll element into view before measuring
-    (el as HTMLElement).scrollIntoView({ block: "nearest", behavior: "smooth" });
+    // Scroll element into view before measuring, but keep manual scrolling available.
+    if (contentEl?.contains(el)) {
+      (el as HTMLElement).scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+    }
 
-    const containerRect = containerEl.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const padding = step.spotlightPadding ?? 4;
+    const updateRect = () => {
+      const containerRect = containerEl.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const padding = step.spotlightPadding ?? 4;
 
-    setTargetRect({
-      top: elRect.top - containerRect.top - padding,
-      left: elRect.left - containerRect.left - padding,
-      width: elRect.width + padding * 2,
-      height: elRect.height + padding * 2,
-    });
+      setTargetRect({
+        top: elRect.top - containerRect.top - padding,
+        left: elRect.left - containerRect.left - padding,
+        width: elRect.width + padding * 2,
+        height: elRect.height + padding * 2,
+      });
+    };
+
+    updateRect();
+    window.setTimeout(updateRect, 220);
   }, [containerEl, step]);
 
   useEffect(() => {

@@ -548,8 +548,8 @@ function formatPreferenceRule(preference: LearnedPreference): string {
   switch (preference.key) {
     case "post_length":
       return preference.value === "shorter"
-        ? "Default to shorter, tighter posts unless the current request asks for more depth."
-        : "Default to longer, more developed posts unless the current request asks for brevity.";
+        ? "Default to shorter posts. Target roughly 75-120 words or about 450-700 characters, including the hook and CTA. Cut filler, get to the point fast, and stop once the core insight lands."
+        : "Default to longer posts. Target roughly 140-220 words with a fuller body section, unless the current request asks for brevity.";
     case "paragraph_density":
       return preference.value === "more_spaced"
         ? "Bias toward more whitespace and more line breaks by default."
@@ -618,7 +618,7 @@ export function compileGenerationInstructionPack(profile: VoiceProfile): string 
     parts.push(
       "",
       `<learned_defaults>`,
-      `These are learned global defaults from repeated user feedback. Apply them unless the current request explicitly asks for something different.`,
+      `These are learned global defaults from repeated user feedback. Treat them as active instructions for new posts unless the current request explicitly asks for something different.`,
       dominantPreferences.map((preference) => `- ${formatPreferenceRule(preference)}`).join("\n"),
       `</learned_defaults>`,
     );
@@ -642,6 +642,7 @@ export function compileGenerationInstructionPack(profile: VoiceProfile): string 
     `- Output only the post text. No labels or commentary.`,
     `- Sound like the user on a strong day: specific, credible, and human.`,
     `- NEVER use em dashes (— or –). Use a comma, a period, or rewrite the sentence.`,
+    `- Unless the user's current request or promoted learned preferences explicitly indicate otherwise, end with a natural call to action, usually a direct question or low-friction prompt.`,
     `- If voice rules conflict with platform defaults, voice rules win.`,
     `- If learned defaults conflict with platform defaults, learned defaults win.`,
     `- Hashtags, if used at all, belong at the end.`,
