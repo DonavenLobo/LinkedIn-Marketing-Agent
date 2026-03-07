@@ -379,6 +379,25 @@
   cursor: not-allowed;
 }
 
+/* Hashtag include toggle */
+.hashtag-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.hashtag-toggle-checkbox {
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
 /* New Post link-style button */
 .btn-new-post {
   display: block;
