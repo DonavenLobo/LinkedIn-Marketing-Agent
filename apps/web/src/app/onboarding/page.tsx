@@ -93,9 +93,9 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   // then fall back through auth metadata keys (LinkedIn OAuth may use 'name' or 'full_name')
   const profileRecord = profile as Record<string, unknown> | null;
   const rawName =
-    (profileRecord?.display_name as string | null) ||
     (user.user_metadata?.full_name as string | null) ||
     (user.user_metadata?.name as string | null) ||
+    (profileRecord?.display_name as string | null) ||
     "";
   const userName = rawName.split(" ")[0] || user.email?.split("@")[0] || "there";
 

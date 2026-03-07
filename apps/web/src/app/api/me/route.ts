@@ -38,13 +38,18 @@ export async function GET(request: Request) {
 
   // Onboarding is complete if the flag is set OR a voice profile already exists
   const onboardingComplete = profile?.onboarding_complete === true || !!voiceProfile;
+  const displayName =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined) ??
+    profile?.display_name ??
+    undefined;
 
   return NextResponse.json(
     {
       user: {
         id: user.id,
         email: user.email,
-        display_name: profile?.display_name,
+        display_name: displayName,
         avatar_url: profile?.avatar_url,
         onboarding_complete: onboardingComplete,
         has_brand_guidelines: !!profile?.brand_guidelines,

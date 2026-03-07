@@ -40,17 +40,6 @@ function extractWritingSamples(transcript: TranscriptMessage[]): string[] {
     .map((message) => message.content);
 }
 
-function extractName(transcript: TranscriptMessage[]): string | null {
-  for (const message of transcript) {
-    if (message.role !== "user" || message.content.length >= 60) continue;
-    const trimmed = message.content.trim();
-    if (!trimmed.includes(" ") || (trimmed.split(" ").length <= 3 && !trimmed.includes("."))) {
-      return trimmed;
-    }
-  }
-  return null;
-}
-
 function buildSignalExtractionPrompt(
   transcript: string,
   toolData: ProfileToolData,
@@ -244,8 +233,6 @@ export async function POST(request: Request) {
       analysisOutput: extractedSignals,
     });
 
-    const extractedName = extractName(transcript);
-
     await supabase.from("voice_profiles").update({ is_active: false, updated_at: new Date().toISOString() }).eq("user_id", userId);
 
     const { data: voiceProfile, error: insertError } = await supabase
@@ -263,9 +250,6 @@ export async function POST(request: Request) {
       onboarding_complete: true,
       updated_at: new Date().toISOString(),
     };
-    if (extractedName) {
-      profileUpdate.display_name = extractedName;
-    }
 
     await supabase.from("user_profiles").update(profileUpdate).eq("id", userId);
 
