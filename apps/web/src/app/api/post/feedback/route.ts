@@ -2,6 +2,7 @@ import { streamText, StreamData } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { getAuthUser, corsHeaders } from "@/lib/auth";
 import { buildSystemPrompt, buildFeedbackPrompt, buildLearningContext } from "@/lib/ai/prompts";
+import { extractPreferenceSignals, normalizeVoiceProfile, refreshVoiceProfile } from "@/lib/ai/voice-engine";
 import type { VoiceProfile, PostInteraction } from "@linkedin-agent/shared";
 
 export async function OPTIONS() {
@@ -29,11 +30,10 @@ export async function POST(request: Request) {
   if (!generated_post_id || !feedback || !current_text || !topic) {
     return new Response(
       JSON.stringify({ error: "generated_post_id, feedback, current_text, and topic are required" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  // Fetch the post to get voice_profile_id and revision count
   const { data: post } = await supabase
     .from("generated_posts")
     .select("voice_profile_id")
@@ -48,19 +48,9 @@ export async function POST(request: Request) {
     });
   }
 
-  // Fetch voice profile
   const { data: voiceProfileData } = post.voice_profile_id
-    ? await supabase
-        .from("voice_profiles")
-        .select("*")
-        .eq("id", post.voice_profile_id)
-        .single()
-    : await supabase
-        .from("voice_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .single();
+    ? await supabase.from("voice_profiles").select("*").eq("id", post.voice_profile_id).single()
+    : await supabase.from("voice_profiles").select("*").eq("user_id", user.id).eq("is_active", true).single();
 
   const voiceProfile = voiceProfileData as VoiceProfile | null;
 
@@ -71,32 +61,31 @@ export async function POST(request: Request) {
     });
   }
 
-  // Fetch brand guidelines from user profile
+  const normalizedProfile = normalizeVoiceProfile(voiceProfile);
+
   const { data: userProfile } = await supabase
     .from("user_profiles")
     .select("brand_guidelines")
     .eq("id", user.id)
     .single();
 
-  // Count previous feedback rounds for this post
   const { count: revisionCount } = await supabase
     .from("post_interactions")
     .select("*", { count: "exact", head: true })
     .eq("generated_post_id", generated_post_id)
     .eq("interaction_type", "feedback");
 
-  // Fetch recent interactions for learning context
   const { data: interactions } = await supabase
     .from("post_interactions")
     .select("*")
-    .eq("voice_profile_id", voiceProfile.id)
+    .eq("voice_profile_id", normalizedProfile.id)
     .order("created_at", { ascending: false })
     .limit(8);
 
   const learningContext = buildLearningContext((interactions as PostInteraction[]) || []);
-  const systemPrompt = buildSystemPrompt(voiceProfile, userProfile?.brand_guidelines);
+  const systemPrompt = buildSystemPrompt(normalizedProfile, userProfile?.brand_guidelines);
   const userPrompt = learningContext
-    ? `${learningContext}\n${buildFeedbackPrompt(current_text, feedback, topic)}`
+    ? `${learningContext}\n\n${buildFeedbackPrompt(current_text, feedback, topic)}`
     : buildFeedbackPrompt(current_text, feedback, topic);
 
   const streamData = new StreamData();
@@ -107,19 +96,33 @@ export async function POST(request: Request) {
     prompt: userPrompt,
     temperature: 0.7,
     onFinish: async ({ text }) => {
-      // Save the feedback interaction
+      const interactionSignals = extractPreferenceSignals({
+        source: "feedback",
+        feedbackText: feedback,
+        originalText: current_text,
+        finalText: text,
+      });
+
       await supabase.from("post_interactions").insert({
         user_id: user.id,
         generated_post_id,
-        voice_profile_id: voiceProfile.id,
+        voice_profile_id: normalizedProfile.id,
         interaction_type: "feedback",
         original_text: current_text,
         feedback_text: feedback,
         final_text: text,
         revision_count: (revisionCount ?? 0) + 1,
+        interaction_signals: interactionSignals,
       });
 
-      // Mark post as revised
+      if (interactionSignals.length > 0) {
+        const profileUpdates = refreshVoiceProfile(normalizedProfile, {
+          appendedSignals: interactionSignals,
+        });
+
+        await supabase.from("voice_profiles").update(profileUpdates).eq("id", normalizedProfile.id);
+      }
+
       await supabase
         .from("generated_posts")
         .update({ status: "revised", generated_text: text })

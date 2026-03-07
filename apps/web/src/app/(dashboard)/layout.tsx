@@ -21,7 +21,11 @@ export default async function DashboardLayout({
       .eq("id", user.id)
       .single();
 
-    displayName = profile?.display_name ?? user.user_metadata?.full_name ?? undefined;
+    displayName =
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      profile?.display_name ??
+      undefined;
     avatarUrl = profile?.avatar_url ?? user.user_metadata?.avatar_url ?? undefined;
   }
 

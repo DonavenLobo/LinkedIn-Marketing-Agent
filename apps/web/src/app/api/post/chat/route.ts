@@ -18,11 +18,14 @@ export async function POST(request: Request) {
   }
 
   const { messages } = await request.json();
+  const userTurnCount = Array.isArray(messages)
+    ? messages.filter((message) => message.role === "user").length
+    : 0;
   const streamData = new StreamData();
 
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
-    system: buildPostChatSystemPrompt(),
+    system: `${buildPostChatSystemPrompt()}\n\nTURN STATE:\n- User turns so far: ${userTurnCount}\n- If user turns so far is 3 or more, do not ask another follow-up question. Synthesize the best enrichedTopic you can and call ready_to_generate now.`,
     messages,
     temperature: 0.3,
     maxTokens: 200,
