@@ -87,8 +87,8 @@ export function generateDemoPost(topic: string, tone: Tone): GeneratedPost {
   const body = template(topic.trim(), keywords);
 
   return {
-    name: "Alex Chen",
-    headline: "VP of Growth \u00b7 B2B SaaS",
+    name: "You",
+    headline: "Your Title \u00b7 Your Company",
     body,
     likes: 40 + (seed % 180),
     comments: 8 + (seed % 35),
