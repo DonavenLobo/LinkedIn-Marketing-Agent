@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: "LinkedIn Marketing Agent",
     description: "AI-powered LinkedIn content in your voice",
-    permissions: ["tabs", "storage", "activeTab"],
+    permissions: ["tabs", "storage"],
     host_permissions: [
       "https://linked-in-marketing-agent.vercel.app/*",
       "https://www.linkedin.com/*"
