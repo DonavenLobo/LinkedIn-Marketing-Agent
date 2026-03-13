@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, DM_Sans, DM_Mono } from "next/font/google";
 import { Toaster } from "@linkedin-agent/shared";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -37,6 +39,8 @@ export default function RootLayout({
       <body className={`${instrumentSerif.variable} ${dmSans.variable} ${dmMono.variable} ${dmSans.className}`}>
         {children}
         <Toaster richColors position="bottom-right" />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
